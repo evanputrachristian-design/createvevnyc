@@ -19,6 +19,8 @@ import { Route as TentangRouteImport } from './routes/tentang'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as LayananIndexRouteImport } from './routes/layanan.index'
 import { Route as LayananSlugRouteImport } from './routes/layanan.$slug'
+import { Route as AuthenticatedAdminJasaRouteImport } from './routes/_authenticated/admin.jasa'
+import { Route as AuthenticatedAdminPesananRouteImport } from './routes/_authenticated/admin.pesanan'
 import { Route as ApiPublicFotoSplatRouteImport } from './routes/api/public/foto/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -70,6 +72,17 @@ const LayananSlugRoute = LayananSlugRouteImport.update({
   path: '/layanan/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminJasaRoute = AuthenticatedAdminJasaRouteImport.update({
+  id: '/jasa',
+  path: '/jasa',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminPesananRoute =
+  AuthenticatedAdminPesananRouteImport.update({
+    id: '/pesanan',
+    path: '/pesanan',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const ApiPublicFotoSplatRoute = ApiPublicFotoSplatRouteImport.update({
   id: '/api/public/foto/$',
   path: '/api/public/foto/$',
@@ -83,9 +96,11 @@ export interface FileRoutesByFullPath {
   '/pesan': typeof PesanRoute
   '/portofolio': typeof PortofolioRoute
   '/tentang': typeof TentangRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/layanan/$slug': typeof LayananSlugRoute
   '/layanan/': typeof LayananIndexRoute
+  '/admin/jasa': typeof AuthenticatedAdminJasaRoute
+  '/admin/pesanan': typeof AuthenticatedAdminPesananRoute
   '/api/public/foto/$': typeof ApiPublicFotoSplatRoute
 }
 export interface FileRoutesByTo {
@@ -95,9 +110,11 @@ export interface FileRoutesByTo {
   '/pesan': typeof PesanRoute
   '/portofolio': typeof PortofolioRoute
   '/tentang': typeof TentangRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/layanan/$slug': typeof LayananSlugRoute
   '/layanan': typeof LayananIndexRoute
+  '/admin/jasa': typeof AuthenticatedAdminJasaRoute
+  '/admin/pesanan': typeof AuthenticatedAdminPesananRoute
   '/api/public/foto/$': typeof ApiPublicFotoSplatRoute
 }
 export interface FileRoutesById {
@@ -109,9 +126,11 @@ export interface FileRoutesById {
   '/pesan': typeof PesanRoute
   '/portofolio': typeof PortofolioRoute
   '/tentang': typeof TentangRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/layanan/$slug': typeof LayananSlugRoute
   '/layanan/': typeof LayananIndexRoute
+  '/_authenticated/admin/jasa': typeof AuthenticatedAdminJasaRoute
+  '/_authenticated/admin/pesanan': typeof AuthenticatedAdminPesananRoute
   '/api/public/foto/$': typeof ApiPublicFotoSplatRoute
 }
 export interface FileRouteTypes {
@@ -126,6 +145,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/layanan/$slug'
     | '/layanan/'
+    | '/admin/jasa'
+    | '/admin/pesanan'
     | '/api/public/foto/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -138,6 +159,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/layanan/$slug'
     | '/layanan'
+    | '/admin/jasa'
+    | '/admin/pesanan'
     | '/api/public/foto/$'
   id:
     | '__root__'
@@ -151,6 +174,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/layanan/$slug'
     | '/layanan/'
+    | '/_authenticated/admin/jasa'
+    | '/_authenticated/admin/pesanan'
     | '/api/public/foto/$'
   fileRoutesById: FileRoutesById
 }
@@ -239,6 +264,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayananSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/jasa': {
+      id: '/_authenticated/admin/jasa'
+      path: '/jasa'
+      fullPath: '/admin/jasa'
+      preLoaderRoute: typeof AuthenticatedAdminJasaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/pesanan': {
+      id: '/_authenticated/admin/pesanan'
+      path: '/pesanan'
+      fullPath: '/admin/pesanan'
+      preLoaderRoute: typeof AuthenticatedAdminPesananRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/api/public/foto/$': {
       id: '/api/public/foto/$'
       path: '/api/public/foto/$'
@@ -249,12 +288,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminJasaRoute: typeof AuthenticatedAdminJasaRoute
+  AuthenticatedAdminPesananRoute: typeof AuthenticatedAdminPesananRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminJasaRoute: AuthenticatedAdminJasaRoute,
+  AuthenticatedAdminPesananRoute: AuthenticatedAdminPesananRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
