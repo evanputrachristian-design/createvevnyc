@@ -1,67 +1,76 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { PageHeader, ServiceCard } from "@/components/site/Layout";
-import { categories, services, startingPrice } from "@/data/services";
-import { site } from "@/config/site";
+import { ServiceCard } from "../components/site/Layout";
+import { categories as baseCategories, startingPrice } from "../data/services";
+import { listPublicServices } from "@/lib/catalog.functions";
+import { toService } from "@/lib/catalog";
+import { site } from "../config/site";
 
 export const Route = createFileRoute("/layanan/")({
-  validateSearch: (s: Record<string, unknown>): { kategori?: string | undefined } => ({ kategori: typeof s["kategori"] === "string" ? s["kategori"] : undefined }),
+  loader: async () => {
+    const rows = await listPublicServices();
+    return { services: rows.map(toService) };
+  },
   head: () => ({
     meta: [
-      { title: `Layanan — ${site.brandName}` },
-      { name: "description", content: "Daftar jasa desain, video, dokumen, dan administrasi keuangan." },
-      { property: "og:title", content: `Layanan — ${site.brandName}` },
-      { property: "og:description", content: "Daftar jasa desain, video, dokumen, dan administrasi keuangan." },
+      { title: `Layanan & Harga — ${site.brandName}` },
+      { name: "description", content: `Daftar lengkap layanan ${site.brandName}: desain poster, editing video, perapian dokumen, hingga administrasi keuangan sederhana.` },
+      { property: "og:title", content: `Layanan & Harga — ${site.brandName}` },
+      { property: "og:description", content: `Daftar lengkap layanan ${site.brandName} dengan estimasi harga dan durasi pengerjaan.` },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: Layanan,
+  component: LayananList,
 });
 
-function Layanan() {
-  const { kategori } = Route.useSearch();
-  const navigate = Route.useNavigate();
+function LayananList() {
+  const { services } = Route.useLoaderData();
+  const categories = useMemo(
+    () => Array.from(new Set<string>([...baseCategories, ...services.map((s) => s.category)])),
+    [services],
+  );
+  const [cat, setCat] = useState<string | null>(null);
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState("default");
-  const list = useMemo(() => {
-    let r = services.filter((s) => (!kategori || s.category === kategori) && (s.name + s.short).toLowerCase().includes(q.toLowerCase()));
-    if (sort === "price-asc") r = [...r].sort((a, b) => startingPrice(a) - startingPrice(b));
-    if (sort === "price-desc") r = [...r].sort((a, b) => startingPrice(b) - startingPrice(a));
-    if (sort === "name") r = [...r].sort((a, b) => a.name.localeCompare(b.name));
-    return r;
-  }, [kategori, q, sort]);
+  const [sort, setSort] = useState<"relevan" | "murah" | "mahal">("relevan");
 
-  const chip = (active: boolean) => `rounded-full border px-4 py-1.5 text-sm transition-colors ${active ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:border-primary"}`;
+  const list = useMemo(() => {
+    let l = services.filter((s) => (!cat || s.category === cat) && (!q || `${s.name} ${s.short}`.toLowerCase().includes(q.toLowerCase())));
+    if (sort === "murah") l = [...l].sort((a, b) => startingPrice(a) - startingPrice(b));
+    if (sort === "mahal") l = [...l].sort((a, b) => startingPrice(b) - startingPrice(a));
+    return l;
+  }, [services, cat, q, sort]);
 
   return (
-    <>
-      <PageHeader eyebrow="Layanan" title="Pilih jasa yang Anda butuhkan">Semua layanan dapat dipesan online. Harga final dikonfirmasi admin.</PageHeader>
-      <div className="container-page">
-        <div className="flex flex-col gap-3 md:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari layanan..." className="h-11 rounded-full bg-card pl-9" />
-          </div>
-          <select value={sort} onChange={(e) => setSort(e.target.value)} className="h-11 rounded-full border bg-card px-4 text-sm" aria-label="Urutkan">
-            <option value="default">Urutan default</option>
-            <option value="price-asc">Harga terendah</option>
-            <option value="price-desc">Harga tertinggi</option>
-            <option value="name">Nama A–Z</option>
-          </select>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button className={chip(!kategori)} onClick={() => navigate({ search: { kategori: undefined } })}>Semua</button>
-          {categories.map((c) => (
-            <button key={c} className={chip(kategori === c)} onClick={() => navigate({ search: { kategori: c } })}>{c}</button>
-          ))}
-        </div>
-        {list.length ? (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{list.map((s) => <ServiceCard key={s.slug} s={s} />)}</div>
-        ) : (
-          <p className="mt-16 text-center text-muted-foreground">Tidak ada layanan yang cocok.</p>
-        )}
+    <div className="container-page py-14">
+      <h1 className="text-center">Semua Layanan</h1>
+      <p className="mx-auto mt-3 max-w-xl text-center text-sm text-muted-foreground">Harga mulai dari, final disepakati setelah diskusi kebutuhan di WhatsApp.</p>
+
+      <div className="mx-auto mt-8 flex max-w-lg items-center gap-2 rounded-full border bg-card px-4 py-2 shadow-soft">
+        <Search className="h-4 w-4 text-muted-foreground" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari layanan..." className="w-full bg-transparent text-sm outline-none" />
       </div>
-    </>
+
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+        <button onClick={() => setCat(null)} className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${!cat ? "bg-primary text-primary-foreground" : "bg-secondary text-primary hover:bg-accent/40"}`}>Semua</button>
+        {categories.map((c) => (
+          <button key={c} onClick={() => setCat(cat === c ? null : c)} className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${cat === c ? "bg-primary text-primary-foreground" : "bg-secondary text-primary hover:bg-accent/40"}`}>{c}</button>
+        ))}
+        <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className="rounded-full border bg-card px-3 py-1.5 text-xs font-semibold text-primary">
+          <option value="relevan">Urutan bawaan</option>
+          <option value="murah">Harga terendah</option>
+          <option value="mahal">Harga tertinggi</option>
+        </select>
+      </div>
+
+      {list.length ? (
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {list.map((s) => <ServiceCard key={s.slug} s={s} />)}
+        </div>
+      ) : (
+        <p className="mt-16 text-center text-sm text-muted-foreground">Tidak ada layanan yang cocok. Coba kata kunci lain.</p>
+      )}
+    </div>
   );
 }

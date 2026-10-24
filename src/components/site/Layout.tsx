@@ -97,8 +97,9 @@ export function Footer() {
           ))}
         </div>
       </div>
-      <div className="container-page border-t border-ink-foreground/15 py-5 text-xs opacity-60">
-        © {new Date().getFullYear()} {site.brandName}. Dikelola oleh {site.ownerName}.
+      <div className="container-page flex items-center justify-between border-t border-ink-foreground/15 py-5 text-xs opacity-60">
+        <span>© {new Date().getFullYear()} {site.brandName}. Dikelola oleh {site.ownerName}.</span>
+        <Link to="/auth" className="hover:opacity-100">Admin</Link>
       </div>
     </footer>
   );
