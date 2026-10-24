@@ -18,7 +18,7 @@ export function Logo() {
   return (
     <Link to="/" className="flex items-center gap-2.5">
       {site.logoUrl ? (
-        <img src={site.logoUrl} alt={site.brandName} className="h-8 w-auto" />
+        <img src={site.logoUrl} alt={site.brandName} className="h-10 w-auto" />
       ) : (
         <span className="grid h-9 w-9 place-items-center rounded-full bg-primary font-display text-sm text-primary-foreground">
           {site.logoText}
