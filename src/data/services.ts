@@ -11,6 +11,7 @@ export const categories = [
   "Film Pendek",
   "Dokumen & Makalah",
   "Administrasi Keuangan",
+  "Aplikasi Premium",
 ] as const;
 export type Category = (typeof categories)[number];
 
@@ -33,7 +34,43 @@ export type Service = {
   featured?: boolean;
 };
 
-export const services: Service[] = [
+export const services: Service[] = [ 
+  {
+    slug: "aplikasi-premium",
+    name: "Aplikasi Premium",
+    category: "Aplikasi Premium",
+    image: design,
+    gallery: [design, video, docs],
+    short: "Pilihan aplikasi premium untuk desain, AI, produktivitas, dan editing.",
+    description:
+      "Layanan aplikasi digital untuk membantu kebutuhan desain, kecerdasan buatan, produktivitas, dan editing. Ketersediaan serta metode berlangganan mengikuti ketentuan resmi masing-masing penyedia.",
+    benefits: [
+      "Pilihan aplikasi dari berbagai kategori",
+      "Informasi paket dan masa berlangganan",
+      "Panduan penggunaan sesuai layanan",
+    ],
+    deliverables: [
+      "Informasi aplikasi dan paket",
+      "Panduan aktivasi resmi jika tersedia",
+    ],
+    packages: [
+      {
+        name: "Paket Aplikasi",
+        price: 0,
+        features: [
+          "Harga dan aplikasi dikonfirmasi sebelum pemesanan",
+        ],
+      },
+    ],
+    duration: "Sesuai layanan",
+    revisions: "Tidak berlaku untuk langganan digital",
+    requirements: [
+      "Nama aplikasi yang dibutuhkan",
+      "Durasi berlangganan",
+    ],
+    available: false,
+    featured: false,
+  },
   {
     slug: "desain-poster-acara",
     name: "Desain Poster Acara",
