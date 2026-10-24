@@ -18,7 +18,7 @@ export type ServiceRow = {
   photo_path: string | null;
   available: boolean;
   featured: boolean;
-  extras: Record<string, unknown>;
+  extras: ServiceExtras;
   sort_order: number;
 };
 
@@ -41,7 +41,7 @@ const keyImage = (key: string) => imageByKey[key] ?? hero;
 
 /** Ubah baris database menjadi bentuk Service yang dipakai komponen situs. */
 export function toService(row: ServiceRow): Service {
-  const ex = (row.extras ?? {}) as ServiceExtras;
+  const ex: ServiceExtras = row.extras ?? {};
   const packages =
     ex.packages && ex.packages.length > 0
       ? ex.packages
