@@ -106,12 +106,7 @@ export function Footer() {
 }
 
 export function SampleNotice() {
-  if (!site.showSampleNotice) return null;
-  return (
-    <div className="bg-secondary text-center text-xs text-secondary-foreground">
-      <p className="container-page py-2">Harga, portofolio, dan data layanan di situs ini masih berupa contoh.</p>
-    </div>
-  );
+  return null;
 }
 
 export function PageHeader({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
