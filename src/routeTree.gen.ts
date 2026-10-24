@@ -10,33 +10,97 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as KontakRouteImport } from './routes/kontak'
+import { Route as PortofolioRouteImport } from './routes/portofolio'
+import { Route as TentangRouteImport } from './routes/tentang'
+import { Route as LayananIndexRouteImport } from './routes/layanan.index'
+import { Route as LayananSlugRouteImport } from './routes/layanan.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KontakRoute = KontakRouteImport.update({
+  id: '/kontak',
+  path: '/kontak',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortofolioRoute = PortofolioRouteImport.update({
+  id: '/portofolio',
+  path: '/portofolio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TentangRoute = TentangRouteImport.update({
+  id: '/tentang',
+  path: '/tentang',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LayananIndexRoute = LayananIndexRouteImport.update({
+  id: '/layanan/',
+  path: '/layanan/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LayananSlugRoute = LayananSlugRouteImport.update({
+  id: '/layanan/$slug',
+  path: '/layanan/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/kontak': typeof KontakRoute
+  '/portofolio': typeof PortofolioRoute
+  '/tentang': typeof TentangRoute
+  '/layanan/$slug': typeof LayananSlugRoute
+  '/layanan/': typeof LayananIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/kontak': typeof KontakRoute
+  '/portofolio': typeof PortofolioRoute
+  '/tentang': typeof TentangRoute
+  '/layanan/$slug': typeof LayananSlugRoute
+  '/layanan': typeof LayananIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/kontak': typeof KontakRoute
+  '/portofolio': typeof PortofolioRoute
+  '/tentang': typeof TentangRoute
+  '/layanan/$slug': typeof LayananSlugRoute
+  '/layanan/': typeof LayananIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/kontak'
+    | '/portofolio'
+    | '/tentang'
+    | '/layanan/$slug'
+    | '/layanan/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/kontak' | '/portofolio' | '/tentang' | '/layanan/$slug' | '/layanan'
+  id:
+    | '__root__'
+    | '/'
+    | '/kontak'
+    | '/portofolio'
+    | '/tentang'
+    | '/layanan/$slug'
+    | '/layanan/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  KontakRoute: typeof KontakRoute
+  PortofolioRoute: typeof PortofolioRoute
+  TentangRoute: typeof TentangRoute
+  LayananSlugRoute: typeof LayananSlugRoute
+  LayananIndexRoute: typeof LayananIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +112,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kontak': {
+      id: '/kontak'
+      path: '/kontak'
+      fullPath: '/kontak'
+      preLoaderRoute: typeof KontakRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portofolio': {
+      id: '/portofolio'
+      path: '/portofolio'
+      fullPath: '/portofolio'
+      preLoaderRoute: typeof PortofolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tentang': {
+      id: '/tentang'
+      path: '/tentang'
+      fullPath: '/tentang'
+      preLoaderRoute: typeof TentangRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/layanan/': {
+      id: '/layanan/'
+      path: '/layanan'
+      fullPath: '/layanan/'
+      preLoaderRoute: typeof LayananIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/layanan/$slug': {
+      id: '/layanan/$slug'
+      path: '/layanan/$slug'
+      fullPath: '/layanan/$slug'
+      preLoaderRoute: typeof LayananSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  KontakRoute: KontakRoute,
+  PortofolioRoute: PortofolioRoute,
+  TentangRoute: TentangRoute,
+  LayananSlugRoute: LayananSlugRoute,
+  LayananIndexRoute: LayananIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

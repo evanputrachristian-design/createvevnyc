@@ -24,11 +24,11 @@ export function buildOrderMessage(o: Order, serviceName: string, brand: string) 
     `Kontak: ${o.contact}`,
     `Layanan: ${serviceName}`,
     `Paket: ${o.pkg}`,
-    o.quantity && `Jumlah/kebutuhan: ${o.quantity}`,
+    o.quantity ? `Jumlah/kebutuhan: ${o.quantity}` : null,
     `Deskripsi: ${o.description}`,
-    o.reference && `Referensi: ${o.reference}`,
-    o.deadline && `Deadline: ${o.deadline}`,
-    o.notes && `Catatan: ${o.notes}`,
+    o.reference ? `Referensi: ${o.reference}` : null,
+    o.deadline ? `Deadline: ${o.deadline}` : null,
+    o.notes ? `Catatan: ${o.notes}` : null,
   ];
-  return lines.filter((l) => l !== undefined && l !== "" ? true : l === "").join("\n");
+  return lines.filter((l) => l !== null).join("\n");
 }
