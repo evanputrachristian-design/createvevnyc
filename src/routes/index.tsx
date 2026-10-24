@@ -49,7 +49,7 @@ function Index() {
         <h2 className="text-3xl md:text-4xl">Kategori layanan</h2>
         <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
           {categories.map((c, i) => {
-            const Icon = icons[i];
+            const Icon = icons[i] ?? Image;
             return (
               <Link key={c} to="/layanan" search={{ kategori: c }} className="rounded-2xl border bg-card p-5 transition-colors hover:border-primary">
                 <Icon className="h-6 w-6 text-accent" />

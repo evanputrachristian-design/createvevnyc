@@ -7,7 +7,7 @@ import { categories, services, startingPrice } from "@/data/services";
 import { site } from "@/config/site";
 
 export const Route = createFileRoute("/layanan/")({
-  validateSearch: (s: Record<string, unknown>) => ({ kategori: typeof s.kategori === "string" ? s.kategori : undefined }),
+  validateSearch: (s: Record<string, unknown>): { kategori?: string } => ({ kategori: typeof s.kategori === "string" ? s.kategori : undefined }),
   head: () => ({
     meta: [
       { title: `Layanan — ${site.brandName}` },

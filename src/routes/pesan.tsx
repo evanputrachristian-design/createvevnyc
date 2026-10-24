@@ -11,7 +11,7 @@ import { site, waLink } from "@/config/site";
 import { buildOrderMessage, orderSchema, type Order } from "@/lib/order";
 
 export const Route = createFileRoute("/pesan")({
-  validateSearch: (s: Record<string, unknown>) => ({ layanan: typeof s.layanan === "string" ? s.layanan : undefined }),
+  validateSearch: (s: Record<string, unknown>): { layanan?: string } => ({ layanan: typeof s.layanan === "string" ? s.layanan : undefined }),
   head: () => ({
     meta: [
       { title: `Pesan Layanan — ${site.brandName}` },
