@@ -98,8 +98,8 @@ export function Footer() {
         </div>
       </div>
       <div className="container-page flex items-center justify-between border-t border-ink-foreground/15 py-5 text-xs opacity-60">
-        <span>© {new Date().getFullYear()} {site.brandName}. Dikelola oleh {site.ownerName}.</span>
-        <Link to="/auth" className="hover:opacity-100">Admin</Link>
+        <span>© {new Date().getFullYear()} {site.brandName}. Dibuat oleh createvevnyc.</span>
+        <Link to="/auth" className="hover:opacity-100">Akun</Link>
       </div>
     </footer>
   );
