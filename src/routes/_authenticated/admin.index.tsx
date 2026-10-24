@@ -5,7 +5,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { adminListOrders, adminListServices, getMyAdminStatus } from "@/lib/admin.functions";
 import { site } from "@/config/site";
 
-export const Route = createFileRoute("/_authenticated/admin")({
+export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: `Dasbor Admin — ${site.brandName}` }, { name: "robots", content: "noindex" }] }),
   component: AdminHome,
 });
