@@ -18,7 +18,7 @@ export function Logo() {
   return (
     <Link to="/" className="flex items-center gap-2.5">
       {site.logoUrl ? (
-        <img src={site.logoUrl} alt={site.brandName} className="h-8 w-auto" />
+        <img src={site.logoUrl} alt={site.brandName} className="h-10 w-auto" />
       ) : (
         <span className="grid h-9 w-9 place-items-center rounded-full bg-primary font-display text-sm text-primary-foreground">
           {site.logoText}
@@ -98,8 +98,8 @@ export function Footer() {
         </div>
       </div>
       <div className="container-page flex items-center justify-between border-t border-ink-foreground/15 py-5 text-xs opacity-60">
-        <span>© {new Date().getFullYear()} {site.brandName}. Dikelola oleh {site.ownerName}.</span>
-        <Link to="/auth" className="hover:opacity-100">Admin</Link>
+        <span>© {new Date().getFullYear()} {site.brandName}. Dibuat oleh createvevnyc.</span>
+        <Link to="/auth" className="hover:opacity-100">Akun</Link>
       </div>
     </footer>
   );

@@ -4,18 +4,18 @@
  * Semua halaman membaca data dari file ini, jadi cukup edit di satu tempat.
  */
 export const site = {
-  brandName: "Karya Rapi",
-  ownerName: "Nama Pengelola",
-  logoText: "KR", // dipakai sebagai logo teks; ganti dengan logoUrl bila punya logo gambar
-  logoUrl: "" as string, // contoh: "/logo.png" (simpan file di folder public)
-  favicon: "/favicon.ico",
-  tagline: "Jasa kreatif & administrasi digital yang rapi, tepat waktu, dan mudah dipesan.",
+  brandName: "createvevnyc",
+  ownerName: "createvevnyc",
+  logoText: "CV", // dipakai sebagai logo teks; ganti dengan logoUrl bila punya logo gambar
+  logoUrl: "/logo.png" as string, // contoh: "/logo.png" (simpan file di folder public)
+  favicon: "/favicon.png",
+  tagline: "Karya Rapi — jasa kreatif & administrasi digital yang rapi, tepat waktu, dan mudah dipesan.",
   description:
     "Kami membantu pelajar, mahasiswa, komunitas, organisasi, UMKM, dan masyarakat umum menyelesaikan kebutuhan desain, video, dokumen, dan administrasi sederhana.",
   // Warna utama diatur di src/styles.css (variabel --primary dan --accent).
 
   // Nomor WhatsApp format internasional tanpa tanda + atau spasi. CONTOH, ganti!
-  whatsapp: "6281234567890",
+  whatsapp: "6281233097078",
   email: "halo@contoh-bisnis.id",
   serviceArea: "Melayani secara online ke seluruh Indonesia",
   socials: [
@@ -48,7 +48,7 @@ export const site = {
 
   about: {
     story:
-      "Karya Rapi berawal dari kebiasaan membantu teman dan komunitas membuat poster, merapikan dokumen, dan mengedit video acara. Dari situ kami belajar bahwa banyak orang butuh hasil yang rapi tanpa proses yang rumit.",
+      "createvevnyc berawal dari kebiasaan membantu teman dan komunitas membuat poster, merapikan dokumen, dan mengedit video acara. Dari situ kami belajar bahwa banyak orang butuh hasil yang rapi tanpa proses yang rumit.",
     vision: "Menjadi mitra kreatif dan administrasi digital yang terpercaya bagi siapa saja.",
     mission: [
       "Memberikan hasil kerja yang rapi, jelas, dan sesuai kebutuhan.",
