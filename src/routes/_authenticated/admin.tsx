@@ -15,19 +15,21 @@ function AdminHome() {
   const services = useQuery({ queryKey: ["admin-services"], queryFn: () => adminListServices(), enabled: Boolean(isAdmin) });
   const orders = useQuery({ queryKey: ["admin-orders"], queryFn: () => adminListOrders(), enabled: Boolean(isAdmin) });
 
-  const newOrders = (orders.data ?? []).filter((o) => o.status === "baru").length;
+  const serviceList = (services.data ?? []) as import("@/lib/catalog").ServiceRow[];
+  const orderList = (orders.data ?? []) as import("@/lib/admin.functions").OrderRow[];
+  const newOrders = orderList.filter((o) => o.status === "baru").length;
 
   return (
     <AdminShell title="Dasbor">
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border bg-card p-6">
           <Package className="h-5 w-5 text-accent" />
-          <p className="mt-4 font-display text-3xl">{services.data?.length ?? "…"}</p>
+          <p className="mt-4 font-display text-3xl">{services.data ? serviceList.length : "…"}</p>
           <p className="text-sm text-muted-foreground">Total jasa</p>
         </div>
         <div className="rounded-2xl border bg-card p-6">
           <ClipboardList className="h-5 w-5 text-accent" />
-          <p className="mt-4 font-display text-3xl">{orders.data?.length ?? "…"}</p>
+          <p className="mt-4 font-display text-3xl">{orders.data ? orderList.length : "…"}</p>
           <p className="text-sm text-muted-foreground">Pesanan masuk</p>
         </div>
         <div className="rounded-2xl border bg-card p-6">

@@ -144,7 +144,7 @@ function AdminJasa() {
             </tr>
           </thead>
           <tbody>
-            {(services.data ?? []).map((s) => (
+            {((services.data ?? []) as ServiceRow[]).map((s) => (
               <tr key={s.id} className="border-b last:border-0">
                 <td className="p-4">
                   <div className="flex items-center gap-3">
@@ -169,7 +169,7 @@ function AdminJasa() {
             ))}
           </tbody>
         </table>
-        {services.data?.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">Belum ada jasa.</p>}
+        {services.data !== undefined && (services.data as ServiceRow[]).length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">Belum ada jasa.</p>}
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

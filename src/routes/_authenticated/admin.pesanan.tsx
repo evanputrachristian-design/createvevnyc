@@ -38,7 +38,7 @@ function AdminPesanan() {
   return (
     <AdminShell title="Pesanan Masuk">
       <div className="grid gap-4">
-        {(orders.data ?? []).map((o) => (
+        {((orders.data ?? []) as OrderRow[]).map((o) => (
           <article key={o.id} className="rounded-2xl border bg-card p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -79,7 +79,7 @@ function AdminPesanan() {
             </div>
           </article>
         ))}
-        {orders.data?.length === 0 && (
+        {orders.data !== undefined && (orders.data as OrderRow[]).length === 0 && (
           <p className="rounded-2xl border bg-card p-10 text-center text-sm text-muted-foreground">Belum ada pesanan masuk.</p>
         )}
       </div>
