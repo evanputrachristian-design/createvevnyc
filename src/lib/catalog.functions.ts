@@ -32,21 +32,20 @@ export const createOrder = createServerFn({ method: "POST" })
     const sb = publicClient();
     const { data: svc } = await sb.from("services").select("name").eq("slug", data.service).maybeSingle();
     const clean = (v?: string) => (v && v.trim() ? v.trim() : null);
-    const { data: inserted, error } = await sb
-      .from("orders")
-      .insert({
-        name: data.name,
-        contact: data.contact,
-        service_name: svc?.name ?? data.service,
-        pkg: data.pkg,
-        quantity: clean(data.quantity),
-        description: data.description,
-        reference: clean(data.reference),
-        deadline: clean(data.deadline),
-        notes: clean(data.notes),
-      })
-      .select("id")
-      .single();
-    if (error) throw new Error("Pesanan gagal disimpan");
-    return { id: inserted.id };
+    const { error } = await sb.from("orders").insert({
+      name: data.name,
+      contact: data.contact,
+      service_name: svc?.name ?? data.service,
+      pkg: data.pkg,
+      quantity: clean(data.quantity),
+      description: data.description,
+      reference: clean(data.reference),
+      deadline: clean(data.deadline),
+      notes: clean(data.notes),
+    });
+    if (error) {
+      console.error("createOrder insert failed:", error.message);
+      throw new Error("Pesanan gagal disimpan");
+    }
+    return { ok: true };
   });
