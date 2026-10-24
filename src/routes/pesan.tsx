@@ -72,7 +72,7 @@ function OrderPage() {
             <dl className="grid gap-3 text-sm sm:grid-cols-[10rem_1fr]">
               {([["Nama", review.name], ["Kontak", review.contact], ["Layanan", svc.name], ["Paket", `${review.pkg}${pkg ? ` (mulai ${rupiah(pkg.price)})` : ""}`], ["Jumlah", review.quantity], ["Deskripsi", review.description], ["Referensi", review.reference], ["Deadline", review.deadline], ["Catatan", review.notes]] as const)
                 .filter(([, v]) => v)
-                .map(([k, v]) => (<><dt key={k} className="text-muted-foreground">{k}</dt><dd className="whitespace-pre-wrap">{v}</dd></>))}
+                .map(([k, v]) => (<div key={k} className="contents"><dt className="text-muted-foreground">{k}</dt><dd className="whitespace-pre-wrap">{v}</dd></div>))}
             </dl>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">Harga yang tertera adalah harga dasar. Harga final dikonfirmasi oleh admin.</p>

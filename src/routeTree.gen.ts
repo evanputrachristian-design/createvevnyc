@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as KontakRouteImport } from './routes/kontak'
+import { Route as PesanRouteImport } from './routes/pesan'
 import { Route as PortofolioRouteImport } from './routes/portofolio'
 import { Route as TentangRouteImport } from './routes/tentang'
 import { Route as LayananIndexRouteImport } from './routes/layanan.index'
@@ -24,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
 const KontakRoute = KontakRouteImport.update({
   id: '/kontak',
   path: '/kontak',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PesanRoute = PesanRouteImport.update({
+  id: '/pesan',
+  path: '/pesan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortofolioRoute = PortofolioRouteImport.update({
@@ -50,6 +56,7 @@ const LayananSlugRoute = LayananSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/kontak': typeof KontakRoute
+  '/pesan': typeof PesanRoute
   '/portofolio': typeof PortofolioRoute
   '/tentang': typeof TentangRoute
   '/layanan/$slug': typeof LayananSlugRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/kontak': typeof KontakRoute
+  '/pesan': typeof PesanRoute
   '/portofolio': typeof PortofolioRoute
   '/tentang': typeof TentangRoute
   '/layanan/$slug': typeof LayananSlugRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/kontak': typeof KontakRoute
+  '/pesan': typeof PesanRoute
   '/portofolio': typeof PortofolioRoute
   '/tentang': typeof TentangRoute
   '/layanan/$slug': typeof LayananSlugRoute
@@ -77,17 +86,25 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/kontak'
+    | '/pesan'
     | '/portofolio'
     | '/tentang'
     | '/layanan/$slug'
     | '/layanan/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/kontak' | '/portofolio' | '/tentang' | '/layanan/$slug' | '/layanan'
+    | '/'
+    | '/kontak'
+    | '/pesan'
+    | '/portofolio'
+    | '/tentang'
+    | '/layanan/$slug'
+    | '/layanan'
   id:
     | '__root__'
     | '/'
     | '/kontak'
+    | '/pesan'
     | '/portofolio'
     | '/tentang'
     | '/layanan/$slug'
@@ -97,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   KontakRoute: typeof KontakRoute
+  PesanRoute: typeof PesanRoute
   PortofolioRoute: typeof PortofolioRoute
   TentangRoute: typeof TentangRoute
   LayananSlugRoute: typeof LayananSlugRoute
@@ -117,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/kontak'
       fullPath: '/kontak'
       preLoaderRoute: typeof KontakRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pesan': {
+      id: '/pesan'
+      path: '/pesan'
+      fullPath: '/pesan'
+      preLoaderRoute: typeof PesanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portofolio': {
@@ -153,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   KontakRoute: KontakRoute,
+  PesanRoute: PesanRoute,
   PortofolioRoute: PortofolioRoute,
   TentangRoute: TentangRoute,
   LayananSlugRoute: LayananSlugRoute,
