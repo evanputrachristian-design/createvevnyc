@@ -107,9 +107,14 @@ BEGIN
     v_report := v_report || 'FAIL - T5 error: ' || SQLERRM || E'\n';
   END;
 
+  -- Prepare C outside the exception sub-block so its state remains waiting_confirmation.
+  v_ok := public.transition_order_payment_status(v_c, 'menunggu_pembayaran', 'menunggu_konfirmasi');
+  IF v_ok IS NOT TRUE THEN
+    v_report := v_report || E'FAIL - persiapan T6/T7 gagal\n';
+  END IF;
+
   -- T6: a random non-admin UUID must not confirm.
   BEGIN
-    PERFORM public.transition_order_payment_status(v_c, 'menunggu_pembayaran', 'menunggu_konfirmasi');
     PERFORM public.transition_order_payment_status(v_c, 'menunggu_konfirmasi', 'dikonfirmasi', gen_random_uuid(), 'JKLMNPQR', NULL);
     v_report := v_report || E'FAIL - T6 non-admin diterima\n';
   EXCEPTION WHEN OTHERS THEN
