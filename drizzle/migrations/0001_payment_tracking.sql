@@ -15,6 +15,7 @@ alter table public.orders
 create table if not exists public.payment_settings (
   id integer primary key default 1 check (id = 1),
   dp_percent integer not null default 50 check (dp_percent between 0 and 100),
+  qris_image_path text,
   updated_at timestamptz not null default now()
 );
 insert into public.payment_settings (id, dp_percent)
@@ -33,3 +34,19 @@ create policy "Admins can update payment settings" on public.payment_settings
   with check (public.has_role(auth.uid(), 'admin'));
 
 -- Existing orders remain payment-unconfirmed until reviewed by an admin.
+
+
+-- QRIS statis milik usaha: file publik untuk ditampilkan saat checkout,
+-- tetapi unggah/penggantian hanya boleh dilakukan admin yang login.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('payment-assets', 'payment-assets', true, 5242880, array['image/png','image/jpeg','image/webp'])
+on conflict (id) do update set public = true, file_size_limit = 5242880, allowed_mime_types = array['image/png','image/jpeg','image/webp'];
+
+drop policy if exists "Public can view payment assets" on storage.objects;
+create policy "Public can view payment assets" on storage.objects for select to public using (bucket_id = 'payment-assets');
+drop policy if exists "Admins can upload payment assets" on storage.objects;
+create policy "Admins can upload payment assets" on storage.objects for insert to authenticated with check (bucket_id = 'payment-assets' and public.has_role(auth.uid(), 'admin'));
+drop policy if exists "Admins can update payment assets" on storage.objects;
+create policy "Admins can update payment assets" on storage.objects for update to authenticated using (bucket_id = 'payment-assets' and public.has_role(auth.uid(), 'admin')) with check (bucket_id = 'payment-assets' and public.has_role(auth.uid(), 'admin'));
+drop policy if exists "Admins can delete payment assets" on storage.objects;
+create policy "Admins can delete payment assets" on storage.objects for delete to authenticated using (bucket_id = 'payment-assets' and public.has_role(auth.uid(), 'admin'));
