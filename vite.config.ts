@@ -7,6 +7,15 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  // Workers Builds expects the existing production Worker name. Without this,
+  // Nitro derives a name from the GitHub owner/repository and Wrangler rejects deployment.
+  nitro: {
+    cloudflare: {
+      wrangler: {
+        name: "createvevnyc",
+      },
+    },
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
