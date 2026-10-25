@@ -126,6 +126,12 @@ export type OrderRow = {
   deadline: string | null;
   notes: string | null;
   status: string;
+  payment_method?: "transfer" | "tunai";
+  payment_status?: "belum_dibayar" | "menunggu_verifikasi" | "dp_dibayar" | "lunas" | "gagal" | "dibatalkan";
+  total_amount?: number | null;
+  dp_percent?: number;
+  dp_amount?: number | null;
+  payment_note?: string | null;
 };
 
 export const adminListOrders = createServerFn({ method: "GET" })
@@ -148,5 +154,61 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     await assertAdmin(ctx);
     const { error } = await ctx.supabase.from("orders").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error("Gagal memperbarui status");
+    return { ok: true };
+  });
+
+
+export const updateOrderPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({
+      id: z.string().uuid(),
+      payment_status: z.enum(["belum_dibayar", "menunggu_verifikasi", "dp_dibayar", "lunas", "gagal", "dibatalkan"]),
+      total_amount: z.number().int().min(0).nullable().optional(),
+      dp_percent: z.number().int().min(0).max(100).optional(),
+      payment_note: z.string().trim().max(500).nullable().optional(),
+    }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as Ctx;
+    await assertAdmin(ctx);
+    const patch: Record<string, unknown> = { payment_status: data.payment_status };
+    if (data.total_amount !== undefined) {
+      patch.total_amount = data.total_amount;
+      if (data.total_amount !== null) {
+        const { data: settings } = await ctx.supabase.from("payment_settings").select("dp_percent").eq("id", 1).maybeSingle();
+        const percent = data.dp_percent ?? settings?.dp_percent ?? 50;
+        patch.dp_percent = percent;
+        patch.dp_amount = Math.round(data.total_amount * percent / 100);
+      }
+    }
+    if (data.dp_percent !== undefined) {
+      patch.dp_percent = data.dp_percent;
+      if (data.total_amount !== undefined && data.total_amount !== null) patch.dp_amount = Math.round(data.total_amount * data.dp_percent / 100);
+    }
+    if (data.payment_note !== undefined) patch.payment_note = data.payment_note;
+    const { error } = await ctx.supabase.from("orders").update(patch).eq("id", data.id);
+    if (error) throw new Error("Gagal memperbarui pembayaran");
+    return { ok: true };
+  });
+
+export const getPaymentSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const ctx = context as unknown as Ctx;
+    await assertAdmin(ctx);
+    const { data, error } = await ctx.supabase.from("payment_settings").select("dp_percent").eq("id", 1).maybeSingle();
+    if (error) throw new Error("Gagal memuat pengaturan DP");
+    return { dp_percent: data?.dp_percent ?? 50 };
+  });
+
+export const savePaymentSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ dp_percent: z.number().int().min(0).max(100) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as Ctx;
+    await assertAdmin(ctx);
+    const { error } = await ctx.supabase.from("payment_settings").upsert({ id: 1, dp_percent: data.dp_percent, updated_at: new Date().toISOString() });
+    if (error) throw new Error("Gagal menyimpan pengaturan DP");
     return { ok: true };
   });
