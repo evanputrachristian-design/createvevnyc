@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { orderSchema } from "@/lib/order";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getRequest } from "@tanstack/react-start/server";
 
 type PaymentFlowStatus = "menunggu_pembayaran" | "menunggu_konfirmasi" | "dikonfirmasi" | "ditolak";
 type OrderDb = {
@@ -124,17 +125,40 @@ export const adminTransitionPaymentFlow = createServerFn({ method: "POST" })
   });
 
 const trackInput = z.object({ orderId: z.string().uuid(), accessCode: z.string().trim().regex(/^[A-HJ-NP-Z2-9]{8,10}$/) });
+async function keyedHash(value: string): Promise<string> {
+  const secret = process.env["ORDER_ACCESS_RATE_LIMIT_SECRET"];
+  if (!secret || secret.length < 32) throw new Error("Layanan pelacakan belum dikonfigurasi");
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(mac), (v) => v.toString(16).padStart(2, "0")).join("");
+}
 export const getTrackedOrder = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => trackInput.parse(data))
   .handler(async ({ data }) => {
     const sb = await adminClient();
+    const req = getRequest();
+    const ip = req.headers.get("cf-connecting-ip");
+    const orderScopeHash = await keyedHash("order:" + data.orderId);
+    const ipScopeHash = ip ? await keyedHash("ip:" + ip.slice(0, 64)) : null;
+    const { data: orderLocked, error: lockError } = await sb.rpc("is_order_access_locked", { p_scope: "order", p_subject_hash: orderScopeHash });
+    if (lockError) throw new Error("Layanan pelacakan sementara tidak tersedia");
+    if (orderLocked) throw new Error("Terlalu banyak percobaan. Coba lagi dalam 15 menit.");
+    if (ipScopeHash) {
+      const { data: ipLocked, error: ipLockError } = await sb.rpc("is_order_access_locked", { p_scope: "ip", p_subject_hash: ipScopeHash });
+      if (ipLockError) throw new Error("Layanan pelacakan sementara tidak tersedia");
+      if (ipLocked) throw new Error("Terlalu banyak percobaan. Coba lagi dalam 15 menit.");
+    }
     const { data: row, error } = await sb.from("orders")
       .select("id,created_at,name,contact,service_name,pkg,status,payment_status,payment_method,payment_flow_status,total_amount,dp_percent,dp_amount,payment_note,access_code,confirmed_at,rejected_at,rejection_reason,is_legacy_order")
       .eq("id", data.orderId).maybeSingle();
+    if (error) throw new Error("Layanan pelacakan sementara tidak tersedia");
     // Generic response for missing, legacy, or invalid credentials.
-    if (error || !row || row.is_legacy_order || row.payment_flow_status !== "dikonfirmasi" || row.access_code !== data.accessCode) {
+    if (!row || row.is_legacy_order || row.payment_flow_status !== "dikonfirmasi" || row.access_code !== data.accessCode) {
+      await sb.rpc("record_order_access_failure", { p_scope: "order", p_subject_hash: orderScopeHash, p_order_id: data.orderId });
+      if (ipScopeHash) await sb.rpc("record_order_access_failure", { p_scope: "ip", p_subject_hash: ipScopeHash, p_order_id: null });
       throw new Error("Nomor pesanan atau kode akses tidak valid");
     }
+    await sb.rpc("reset_order_access_attempts", { p_order_subject_hash: orderScopeHash });
     return { order: {
       id: row.id, created_at: row.created_at, service_name: row.service_name, pkg: row.pkg,
       status: row.status, payment_status: row.payment_status, payment_method: row.payment_method,
