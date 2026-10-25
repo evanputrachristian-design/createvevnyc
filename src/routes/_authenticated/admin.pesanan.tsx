@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { adminListOrders, getMyAdminStatus, updateOrderStatus, updateOrderPayment, getPaymentSettings, savePaymentSettings, type OrderRow } from "@/lib/admin.functions";
 import { waLink, site } from "@/config/site";
+import { adminTransitionPaymentFlow } from "@/lib/payment-flow.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/pesanan")({
   head: () => ({ meta: [{ title: `Pesanan Masuk — ${site.brandName}` }, { name: "robots", content: "noindex" }] }),
@@ -30,6 +31,7 @@ function AdminPesanan() {
   const [dpPercent, setDpPercent] = useState<number | null>(null);
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({});
   const currentDp = dpPercent ?? paymentSettings.data?.dp_percent ?? 50;
 
   const saveDp = async () => {
@@ -49,6 +51,15 @@ function AdminPesanan() {
       qc.invalidateQueries({ queryKey: ["admin-orders"] });
       toast.success("Pembayaran diperbarui");
     } catch (err) { toast.error(err instanceof Error ? err.message : "Gagal memperbarui pembayaran"); }
+  };
+
+  const transitionPaymentFlow = async (o: OrderRow, action: "menunggu_konfirmasi" | "dikonfirmasi" | "ditolak") => {
+    try {
+      const result = await adminTransitionPaymentFlow({ data: { id: o.id, action, ...(action === "ditolak" ? { rejectionReason: rejectionReasons[o.id] ?? "" } : {}) } });
+      qc.invalidateQueries({ queryKey: ["admin-orders"] });
+      if (result.accessCode) toast.success(`Pembayaran dikonfirmasi. Kode akses: ${result.accessCode}`);
+      else toast.success("Status alur pembayaran diperbarui");
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Gagal memperbarui alur pembayaran"); }
   };
 
   const setStatus = async (o: OrderRow, status: string) => {
@@ -99,6 +110,21 @@ function AdminPesanan() {
                 <input value={notes[o.id] ?? o.payment_note ?? ""} onChange={(e) => setNotes((prev) => ({ ...prev, [o.id]: e.target.value }))} placeholder="Mis. tunai diterima / instruksi transfer" className="h-9 rounded-md border bg-background px-3 text-sm text-foreground" />
               </label>
               <button onClick={() => setPayment(o, (o.payment_status ?? "belum_dibayar") as "belum_dibayar" | "menunggu_verifikasi" | "dp_dibayar" | "lunas" | "gagal" | "dibatalkan")} className="h-9 rounded-full border px-4 text-xs font-semibold">Simpan nominal & catatan</button>
+            </div>
+            <div className="mt-4 rounded-xl border p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold">Alur pembayaran: <span className="capitalize">{(o.payment_flow_status ?? "menunggu_pembayaran").replaceAll("_", " ")}</span></p>
+                {o.payment_flow_status === "dikonfirmasi" && o.access_code && <p className="font-mono text-xs">Kode akses: {o.access_code}</p>}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(o.payment_flow_status ?? "menunggu_pembayaran") === "menunggu_pembayaran" && <button onClick={() => transitionPaymentFlow(o, "menunggu_konfirmasi")} className="h-9 rounded-full border px-4 text-xs font-semibold">Tandai menunggu konfirmasi</button>}
+                {o.payment_flow_status === "menunggu_konfirmasi" && <>
+                  <button onClick={() => transitionPaymentFlow(o, "dikonfirmasi")} className="h-9 rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground">Konfirmasi pembayaran</button>
+                  <input value={rejectionReasons[o.id] ?? ""} onChange={(e) => setRejectionReasons((p) => ({ ...p, [o.id]: e.target.value }))} maxLength={1000} placeholder="Alasan penolakan (opsional)" className="h-9 min-w-48 flex-1 rounded-md border bg-background px-3 text-sm" />
+                  <button onClick={() => transitionPaymentFlow(o, "ditolak")} className="h-9 rounded-full border border-destructive/50 px-4 text-xs font-semibold text-destructive">Tolak</button>
+                </>}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">Konfirmasi hanya setelah bukti transfer diperiksa. Kode akses ditampilkan kepada admin setelah konfirmasi.</p>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
