@@ -1,0 +1,79 @@
+-- 4_NANTI_0002b_dan_rollback.sql
+-- SAFETY: all executable SQL below is commented out. Do not uncomment/run now.
+-- 0002b is only after the server-side order flow has been deployed and tested.
+-- Never run 0002b before createOrder no longer depends on anon/authenticated INSERT.
+
+-- ---------------------------------------------------------------------
+-- 0002b: tighten after new server routes are live and verified.
+-- Before running, record current grants and retain output in the deployment notes.
+-- SELECT has_table_privilege('anon','public.orders','INSERT') AS anon_insert_before,
+--        has_table_privilege('authenticated','public.orders','INSERT') AS authenticated_insert_before;
+-- BEGIN;
+-- UPDATE public.orders
+-- SET is_legacy_order = true
+-- WHERE is_legacy_order = false AND waiting_token_hash IS NULL;
+-- DROP POLICY IF EXISTS "Anyone can place an order" ON public.orders;
+-- REVOKE INSERT ON TABLE public.orders FROM anon, authenticated;
+-- REVOKE TRUNCATE, REFERENCES, TRIGGER ON TABLE public.orders FROM anon, authenticated;
+-- COMMIT;
+
+-- ---------------------------------------------------------------------
+-- ROLLBACK 0002b only: restore the restricted temporary INSERT policy.
+-- Restore grants to match the recorded pre-0002b values, not assumptions.
+-- The authenticated GRANT line is conditional on authenticated_insert_before=true.
+-- BEGIN;
+-- GRANT INSERT ON TABLE public.orders TO anon;
+-- GRANT INSERT ON TABLE public.orders TO authenticated; -- only if recorded true before 0002b
+-- DROP POLICY IF EXISTS "Anyone can place an order" ON public.orders;
+-- CREATE POLICY "Anyone can place an order" ON public.orders
+--   FOR INSERT TO anon, authenticated
+--   WITH CHECK (
+--     payment_flow_status = 'menunggu_pembayaran'
+--     AND is_legacy_order = false
+--     AND status = 'baru'
+--     AND access_code IS NULL AND waiting_token_hash IS NULL
+--     AND confirmed_at IS NULL AND confirmed_by IS NULL
+--     AND rejected_at IS NULL AND rejected_by IS NULL AND rejection_reason IS NULL
+--   );
+-- COMMIT;
+
+-- Note: rollback 0002b does not undo 0002a; all new columns/functions/table remain.
+
+-- ---------------------------------------------------------------------
+-- ROLLBACK 0002a: destructive. Only after 0002b has not run, or after 0002b
+-- was rolled back. First disable/remove code that relies on these objects.
+-- This restores the original INSERT policy and drops new data/objects.
+-- BEGIN;
+-- DROP POLICY IF EXISTS "Anyone can place an order" ON public.orders;
+-- CREATE POLICY "Anyone can place an order" ON public.orders
+--   FOR INSERT TO anon, authenticated WITH CHECK (true);
+-- DROP FUNCTION IF EXISTS public.transition_order_payment_status(uuid,text,text,uuid,text,text);
+-- DROP FUNCTION IF EXISTS public.reset_order_access_attempts(text);
+-- DROP FUNCTION IF EXISTS public.record_order_access_failure(text,text,uuid);
+-- DROP FUNCTION IF EXISTS public.is_order_access_locked(text,text);
+-- DROP TABLE IF EXISTS public.order_access_attempts;
+-- DROP INDEX IF EXISTS public.orders_payment_flow_status_idx;
+-- DROP INDEX IF EXISTS public.orders_access_code_uidx;
+-- DROP INDEX IF EXISTS public.orders_waiting_token_hash_uidx;
+-- ALTER TABLE public.orders
+--   DROP CONSTRAINT IF EXISTS orders_payment_rejection_check,
+--   DROP CONSTRAINT IF EXISTS orders_payment_confirmation_check,
+--   DROP CONSTRAINT IF EXISTS orders_access_code_format_check,
+--   DROP CONSTRAINT IF EXISTS orders_payment_flow_status_check;
+-- ALTER TABLE public.orders
+--   DROP COLUMN IF EXISTS rejection_reason,
+--   DROP COLUMN IF EXISTS rejected_by,
+--   DROP COLUMN IF EXISTS rejected_at,
+--   DROP COLUMN IF EXISTS confirmed_by,
+--   DROP COLUMN IF EXISTS confirmed_at,
+--   DROP COLUMN IF EXISTS access_code,
+--   DROP COLUMN IF EXISTS waiting_token_hash,
+--   DROP COLUMN IF EXISTS is_legacy_order,
+--   DROP COLUMN IF EXISTS payment_flow_status;
+-- COMMIT;
+
+-- IMPORTANT:
+-- * Never run 0002a rollback while application code still uses the new columns/functions.
+-- * Rollback 0002a restores the original permissive INSERT policy by design; this is a
+--   security downgrade relative to the temporary restricted policy.
+-- * This file is a reviewed draft and has not been executed in PostgreSQL.
