@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { LayoutDashboard, Package, ClipboardList, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, LogOut, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyAdminStatus } from "@/lib/admin.functions";
@@ -23,14 +23,29 @@ export function AdminShell({ title, children }: { title: string; children: React
   };
 
   if (status.isLoading) {
-    return <div className="container-page py-24 text-center text-muted-foreground">Memeriksa akses...</div>;
+    return <div className="container-page py-24 text-center text-muted-foreground">Memeriksa akses admin...</div>;
   }
+
+  if (status.isError) {
+    const message = status.error instanceof Error ? status.error.message : "Terjadi kesalahan saat memeriksa akses.";
+    return (
+      <div className="container-page max-w-lg py-24 text-center">
+        <h1 className="text-2xl font-semibold">Akses admin gagal diperiksa</h1>
+        <p className="mt-3 break-words text-sm text-muted-foreground">{message}</p>
+        <div className="mt-6 flex justify-center gap-2">
+          <Button variant="outline" onClick={() => status.refetch()}><RefreshCw className="mr-2 h-4 w-4" />Coba lagi</Button>
+          <Button variant="ghost" onClick={signOut}>Keluar</Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!status.data?.isAdmin) {
     return (
       <div className="container-page max-w-md py-24 text-center">
         <h1 className="text-3xl">Akses ditolak</h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Akun Anda tidak memiliki peran admin. Minta pemilik situs untuk memberikan akses, lalu coba lagi.
+          Akun ini berhasil diverifikasi, tetapi belum memiliki peran admin. Minta pemilik situs memberikan peran admin pada akun yang benar, lalu masuk kembali.
         </p>
         <Button variant="outline" className="mt-6" onClick={signOut}>Keluar dari akun ini</Button>
       </div>
