@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { orderSchema, buildOrderMessage, type Order } from "../lib/order";
-import { listPublicServices, createOrder, getPublicQrisImagePath } from "@/lib/catalog.functions";
+import { listPublicServices, getPublicQrisImagePath } from "@/lib/catalog.functions";
+import { createPaymentFlowOrder, getPaymentFlowStatus } from "@/lib/payment-flow.functions";
 import { toService } from "@/lib/catalog";
 import { site, waLink } from "../config/site";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ function Pesan() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [qrisImagePath, setQrisImagePath] = useState<string | null>(null);
   const [qrisLoaded, setQrisLoaded] = useState(false);
+  const [paymentFlow, setPaymentFlow] = useState<{ id: string; waitingToken: string; status: string; accessCode: string | null } | null>(null);
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Order>({
     resolver: zodResolver(orderSchema),
     defaultValues: { service: layanan ?? "", payment_method: "transfer" },
@@ -51,7 +53,9 @@ function Pesan() {
     setQrisImagePath(null);
     setQrisLoaded(false);
     try {
-      await createOrder({ data });
+      const created = await createPaymentFlowOrder({ data });
+      setPaymentFlow({ id: created.order.id, waitingToken: created.waitingToken, status: created.order.payment_flow_status, accessCode: null });
+      try { localStorage.setItem("createvevnyc:pending-order", JSON.stringify({ id: created.order.id, waitingToken: created.waitingToken })); } catch { /* storage may be disabled; current page session still works */ }
     } catch {
       setSaveError("Pesanan gagal tersimpan di sistem kami, tetapi Anda tetap bisa mengirimnya langsung lewat WhatsApp di bawah.");
     }
@@ -65,6 +69,20 @@ function Pesan() {
     }
     setReview(data);
   };
+
+  useEffect(() => {
+    if (!paymentFlow) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const result = await getPaymentFlowStatus({ data: { orderId: paymentFlow.id, waitingToken: paymentFlow.waitingToken } });
+        if (!cancelled) setPaymentFlow((prev) => prev ? { ...prev, status: result.order.payment_flow_status, accessCode: result.accessCode } : prev);
+      } catch { /* Keep the last known state; transient network errors are not fatal. */ }
+    };
+    void poll();
+    const timer = window.setInterval(() => { void poll(); }, 7000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [paymentFlow?.id, paymentFlow?.waitingToken]);
 
   if (review) {
     const name = services.find((s) => s.slug === review.service)?.name ?? review.service;
@@ -80,6 +98,17 @@ function Pesan() {
           </p>
         )}
         <pre className="mt-6 whitespace-pre-wrap rounded-2xl border bg-card p-6 font-body text-sm">{msg}</pre>
+        {paymentFlow && (
+          <section className="mt-4 rounded-xl border bg-secondary/50 p-4 text-left">
+            <p className="text-sm font-semibold">Nomor pesanan</p>
+            <p className="mt-1 break-all font-mono text-xs">{paymentFlow.id}</p>
+            <p className="mt-3 text-sm"><strong>Status pembayaran:</strong> {paymentFlow.status.replaceAll("_", " ")}</p>
+            {paymentFlow.status === "menunggu_pembayaran" && <p className="mt-2 text-xs text-muted-foreground">Tunggu admin meninjau pesanan dan menyepakati nominal. Jangan mengirim pembayaran sebelum nominal dikonfirmasi.</p>}
+            {paymentFlow.status === "menunggu_konfirmasi" && <p className="mt-2 text-xs text-muted-foreground">Pembayaran sedang menunggu pemeriksaan admin.</p>}
+            {paymentFlow.status === "dikonfirmasi" && paymentFlow.accessCode && <p className="mt-3 rounded-lg border bg-card p-3 text-sm"><strong>Kode akses pesanan:</strong> <span className="font-mono">{paymentFlow.accessCode}</span><br/>Simpan kode ini. Kode diperlukan untuk melihat detail pesanan.</p>}
+            {paymentFlow.status === "ditolak" && <p className="mt-2 text-sm text-destructive">Pesanan atau pembayaran ditolak. Hubungi admin untuk tindak lanjut.</p>}
+          </section>
+        )}
         {review.payment_method === "transfer" && (
           <section className="mt-6 rounded-2xl border bg-card p-5 text-center">
             <h2 className="text-lg font-semibold">Pembayaran QRIS</h2>
