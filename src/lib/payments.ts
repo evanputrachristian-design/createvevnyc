@@ -35,6 +35,7 @@ export function balance(price: number | null, rows: PaymentRecord[]) {
 export function paymentStatus(price: number | null, percent: number, rows: PaymentRecord[]) {
   const received = confirmedTotal(rows);
   if (price === null) return "Menunggu konfirmasi harga";
+  if (received > price) return "Kelebihan bayar";
   if (received === price) return "Lunas";
   if (received > 0 && received < depositAmount(price, percent)) return "DP sebagian";
   if (received > 0 && received >= depositAmount(price, percent) && percent > 0) return "DP terkonfirmasi · Belum lunas";
