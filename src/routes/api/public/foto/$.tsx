@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
 /** Menyajikan gambar QRIS dari bucket payment-assets. */
-export const Route = createFileRoute("/api/public/qris/$")({
+export const Route = createFileRoute("/api/public/foto/$")({
   server: {
     handlers: {
       GET: async ({ params }) => {
