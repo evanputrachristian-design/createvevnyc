@@ -51,3 +51,19 @@ export const createOrder = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+
+/** Hanya mengembalikan lokasi gambar QRIS yang memang dikonfigurasi admin. */
+export const getPublicQrisImagePath = createServerFn({ method: "GET" }).handler(async (): Promise<string | null> => {
+  const { data, error } = await publicClient()
+    .from("payment_settings")
+    .select("qris_image_path")
+    .eq("id", 1)
+    .maybeSingle();
+  if (error) {
+    // Tetap izinkan halaman pemesanan dibuka jika pengaturan QRIS belum dapat dibaca.
+    console.error("Gagal memuat pengaturan QRIS:", error.message);
+    return null;
+  }
+  return data?.qris_image_path ?? null;
+});
