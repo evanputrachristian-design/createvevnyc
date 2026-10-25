@@ -39,7 +39,7 @@ function Pesan() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Order>({
     resolver: zodResolver(orderSchema),
-    defaultValues: { service: layanan ?? "" },
+    defaultValues: { service: layanan ?? "", payment_method: "transfer" },
   });
   const svcSlug = watch("service");
   const svc = services.find((s) => s.slug === svcSlug);
@@ -115,6 +115,13 @@ function Pesan() {
           </Field>
         )}
         {!svc && <input type="hidden" {...register("pkg")} value="" />}
+        <Field id="f-payment-method" label="Metode pembayaran *">
+          <select id="f-payment-method" {...register("payment_method")} className="flex h-10 w-full rounded-md border bg-card px-3 text-sm">
+            <option value="transfer">Transfer / QRIS (setelah konfirmasi admin)</option>
+            <option value="tunai">Tunai (bayar langsung)</option>
+          </select>
+        </Field>
+        <p className="text-xs text-muted-foreground">Pilih metode yang diinginkan. Pembayaran belum diproses otomatis; admin akan mengonfirmasi nominal dan instruksi pembayaran setelah meninjau pesanan.</p>
         <Field id="f-qty" label="Jumlah / kebutuhan (opsional)" error={errors.quantity?.message}>
           <Input id="f-qty" {...register("quantity")} placeholder="mis. 3 poster, 1 video 5 menit" />
         </Field>
