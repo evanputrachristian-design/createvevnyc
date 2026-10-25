@@ -199,16 +199,16 @@ export const getPaymentSettings = createServerFn({ method: "GET" })
     await assertAdmin(ctx);
     const { data, error } = await ctx.supabase.from("payment_settings").select("dp_percent").eq("id", 1).maybeSingle();
     if (error) throw new Error("Gagal memuat pengaturan DP");
-    return { dp_percent: data?.dp_percent ?? 50 };
+    return { dp_percent: data?.dp_percent ?? 50, qris_image_path: data?.qris_image_path ?? null };
   });
 
 export const savePaymentSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ dp_percent: z.number().int().min(0).max(100) }).parse(data))
+  .inputValidator((data: unknown) => z.object({ dp_percent: z.number().int().min(0).max(100), qris_image_path: z.string().max(500).nullable().optional() }).parse(data))
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as Ctx;
     await assertAdmin(ctx);
-    const { error } = await ctx.supabase.from("payment_settings").upsert({ id: 1, dp_percent: data.dp_percent, updated_at: new Date().toISOString() });
+    const { error } = await ctx.supabase.from("payment_settings").upsert({ id: 1, dp_percent: data.dp_percent, ...(data.qris_image_path !== undefined ? { qris_image_path: data.qris_image_path } : {}), updated_at: new Date().toISOString() });
     if (error) throw new Error("Gagal menyimpan pengaturan DP");
     return { ok: true };
   });
