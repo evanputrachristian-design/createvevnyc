@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { orderSchema } from "@/lib/order";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type PaymentFlowStatus = "menunggu_pembayaran" | "menunggu_konfirmasi" | "dikonfirmasi" | "ditolak";
 type OrderDb = {
@@ -38,20 +39,6 @@ function safeOrder(row: OrderDb) {
     // Never return the access code to the waiting-room endpoint.
   };
 }
-function getClientIp(): string | null {
-  // Cloudflare Workers sets CF-Connecting-IP. Do not trust arbitrary forwarded headers.
-  try {
-    const h = requireRequestHeaders();
-    const ip = h.get("cf-connecting-ip")?.trim();
-    return ip && ip.length <= 64 ? ip : null;
-  } catch { return null; }
-}
-function requireRequestHeaders(): Headers {
-  // Keep the server import isolated from client bundles.
-  // TanStack Start's server request accessor is dynamically imported by handlers below.
-  throw new Error("request headers must be passed by the server handler");
-}
-
 async function adminContext(context: unknown) {
   const ctx = context as { supabase: any; userId: string };
   const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
@@ -110,7 +97,7 @@ const adminTransitionInput = z.object({
   rejectionReason: z.string().trim().max(1000).optional(),
 });
 export const adminTransitionPaymentFlow = createServerFn({ method: "POST" })
-  .middleware([(await import("@/integrations/supabase/auth-middleware")).requireSupabaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => adminTransitionInput.parse(data))
   .handler(async ({ data, context }) => {
     const ctx = await adminContext(context);
