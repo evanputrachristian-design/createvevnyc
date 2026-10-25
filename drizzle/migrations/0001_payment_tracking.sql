@@ -25,6 +25,11 @@ on conflict (id) do nothing;
 alter table public.payment_settings enable row level security;
 grant select, insert, update on public.payment_settings to authenticated;
 grant all on public.payment_settings to service_role;
+-- Pengunjung hanya perlu membaca pengaturan publik untuk menampilkan QRIS statis.
+-- Tabel ini hanya menyimpan persentase DP dan path gambar QRIS, bukan kredensial.
+drop policy if exists "Public can read payment display settings" on public.payment_settings;
+create policy "Public can read payment display settings" on public.payment_settings
+  for select to anon, authenticated using (true);
 create policy "Admins can read payment settings" on public.payment_settings
   for select to authenticated using (public.has_role(auth.uid(), 'admin'));
 create policy "Admins can insert payment settings" on public.payment_settings
