@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-/** Menyajikan foto jasa dari bucket privat dengan izin baca publik (RLS storage). */
+/** Menyajikan gambar QRIS dari bucket payment-assets. */
 export const Route = createFileRoute("/api/public/foto/$")({
   server: {
     handlers: {
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/api/public/foto/$")({
             },
           },
         });
-        const { data, error } = await sb.storage.from("service-photos").download(path);
+        const { data, error } = await sb.storage.from("payment-assets").download(path);
         if (error || !data) return new Response("Not found", { status: 404 });
         return new Response(data, {
           headers: {

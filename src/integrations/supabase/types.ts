@@ -28,6 +28,12 @@ export type Database = {
           reference: string | null
           service_name: string
           status: string
+          payment_method: string
+          payment_status: string
+          total_amount: number | null
+          dp_percent: number
+          dp_amount: number | null
+          payment_note: string | null
         }
         Insert: {
           contact: string
@@ -42,6 +48,12 @@ export type Database = {
           reference?: string | null
           service_name: string
           status?: string
+          payment_method?: string
+          payment_status?: string
+          total_amount?: number | null
+          dp_percent?: number
+          dp_amount?: number | null
+          payment_note?: string | null
         }
         Update: {
           contact?: string
@@ -56,6 +68,33 @@ export type Database = {
           reference?: string | null
           service_name?: string
           status?: string
+          payment_method?: string
+          payment_status?: string
+          total_amount?: number | null
+          dp_percent?: number
+          dp_amount?: number | null
+          payment_note?: string | null
+        }
+        Relationships: []
+      }
+      payment_settings: {
+        Row: {
+          id: number
+          dp_percent: number
+          qris_image_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          dp_percent?: number
+          qris_image_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          dp_percent?: number
+          qris_image_path?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
