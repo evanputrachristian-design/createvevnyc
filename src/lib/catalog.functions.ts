@@ -37,6 +37,8 @@ export const createOrder = createServerFn({ method: "POST" })
       contact: data.contact,
       service_name: svc?.name ?? data.service,
       pkg: data.pkg,
+      payment_method: data.payment_method,
+      payment_status: "belum_dibayar",
       quantity: clean(data.quantity),
       description: data.description,
       reference: clean(data.reference),
