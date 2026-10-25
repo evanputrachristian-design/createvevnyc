@@ -25,6 +25,20 @@ export function AdminShell({ title, children }: { title: string; children: React
   if (status.isLoading) {
     return <div className="container-page py-24 text-center text-muted-foreground">Memeriksa akses...</div>;
   }
+  if (status.isError) {
+    return (
+      <div className="container-page max-w-lg py-24 text-center">
+        <h1 className="text-3xl">Pemeriksaan admin gagal</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Status admin tidak dapat diverifikasi oleh server. Ini belum tentu berarti akun Anda bukan admin.
+        </p>
+        <p className="mt-2 break-words text-xs text-muted-foreground">
+          {status.error instanceof Error ? status.error.message : "Kesalahan tidak diketahui"}
+        </p>
+        <Button variant="outline" className="mt-6" onClick={() => status.refetch()}>Coba lagi</Button>
+      </div>
+    );
+  }
   if (!status.data?.isAdmin) {
     return (
       <div className="container-page max-w-md py-24 text-center">
