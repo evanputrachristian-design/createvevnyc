@@ -77,6 +77,27 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_settings: {
+        Row: {
+          id: number
+          dp_percent: number
+          qris_image_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          dp_percent?: number
+          qris_image_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          dp_percent?: number
+          qris_image_path?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           available: boolean
