@@ -187,8 +187,30 @@ export const updateOrderPayment = createServerFn({ method: "POST" })
       if (data.total_amount !== undefined && data.total_amount !== null) patch.dp_amount = Math.round(data.total_amount * data.dp_percent / 100);
     }
     if (data.payment_note !== undefined) patch.payment_note = data.payment_note;
-    const { error } = await ctx.supabase.from("orders").update(patch).eq("id", data.id);
-    if (error) throw new Error("Gagal memperbarui pembayaran");
+    const { data: updated, error } = await ctx.supabase
+      .from("orders")
+      .update(patch)
+      .eq("id", data.id)
+      .select("id")
+      .maybeSingle();
+    if (error) {
+      console.error("[admin.updateOrderPayment] Supabase update failed", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      if (error.code === "42703" || error.code === "PGRST204" || error.code === "PGRST205") {
+        throw new Error("Kolom pembayaran belum tersedia di database. Terapkan drizzle/migrations/0001_payment_tracking.sql di Supabase SQL Editor, lalu coba lagi.");
+      }
+      if (error.code === "42501" || error.code === "PGRST301") {
+        throw new Error("Akses database ditolak. Periksa peran admin dan kebijakan RLS tabel orders.");
+      }
+      throw new Error("Database menolak perubahan pembayaran. Periksa log server untuk kode error Supabase.");
+    }
+    if (!updated) {
+      throw new Error("Pesanan tidak ditemukan atau tidak dapat diubah. Muat ulang daftar pesanan dan coba lagi.");
+    }
     return { ok: true };
   });
 
