@@ -197,7 +197,7 @@ export const getPaymentSettings = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const ctx = context as unknown as Ctx;
     await assertAdmin(ctx);
-    const { data, error } = await ctx.supabase.from("payment_settings").select("dp_percent").eq("id", 1).maybeSingle();
+    const { data, error } = await ctx.supabase.from("payment_settings").select("dp_percent, qris_image_path").eq("id", 1).maybeSingle();
     if (error) throw new Error("Gagal memuat pengaturan DP");
     return { dp_percent: data?.dp_percent ?? 50, qris_image_path: data?.qris_image_path ?? null };
   });
@@ -208,7 +208,10 @@ export const savePaymentSettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as Ctx;
     await assertAdmin(ctx);
-    const { error } = await ctx.supabase.from("payment_settings").upsert({ id: 1, dp_percent: data.dp_percent ?? 50, ...(data.qris_image_path !== undefined ? { qris_image_path: data.qris_image_path } : {}), updated_at: new Date().toISOString() });
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (data.dp_percent !== undefined) patch.dp_percent = data.dp_percent;
+    if (data.qris_image_path !== undefined) patch.qris_image_path = data.qris_image_path;
+    const { error } = await ctx.supabase.from("payment_settings").update(patch).eq("id", 1);
     if (error) throw new Error("Gagal menyimpan pengaturan DP");
     return { ok: true };
   });
