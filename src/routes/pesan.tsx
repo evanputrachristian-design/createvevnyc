@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { orderSchema, buildOrderMessage, type Order } from "../lib/order";
-import { listPublicServices, createOrder } from "@/lib/catalog.functions";
+import { listPublicServices, createOrder, getPublicQrisImagePath } from "@/lib/catalog.functions";
 import { toService } from "@/lib/catalog";
 import { site, waLink } from "../config/site";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,8 @@ function Pesan() {
   const { layanan } = Route.useSearch();
   const [review, setReview] = useState<Order | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [qrisImagePath, setQrisImagePath] = useState<string | null>(null);
+  const [qrisLoaded, setQrisLoaded] = useState(false);
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Order>({
     resolver: zodResolver(orderSchema),
     defaultValues: { service: layanan ?? "", payment_method: "transfer" },
@@ -46,10 +48,20 @@ function Pesan() {
 
   const submit = async (data: Order) => {
     setSaveError(null);
+    setQrisImagePath(null);
+    setQrisLoaded(false);
     try {
       await createOrder({ data });
     } catch {
       setSaveError("Pesanan gagal tersimpan di sistem kami, tetapi Anda tetap bisa mengirimnya langsung lewat WhatsApp di bawah.");
+    }
+    if (data.payment_method === "transfer") {
+      try {
+        setQrisImagePath(await getPublicQrisImagePath());
+      } catch {
+        setQrisImagePath(null);
+      }
+      setQrisLoaded(true);
     }
     setReview(data);
   };
@@ -68,6 +80,27 @@ function Pesan() {
           </p>
         )}
         <pre className="mt-6 whitespace-pre-wrap rounded-2xl border bg-card p-6 font-body text-sm">{msg}</pre>
+        {review.payment_method === "transfer" && (
+          <section className="mt-6 rounded-2xl border bg-card p-5 text-center">
+            <h2 className="text-lg font-semibold">Pembayaran QRIS</h2>
+            {!qrisLoaded ? (
+              <p className="mt-2 text-sm text-muted-foreground">Memuat informasi pembayaran…</p>
+            ) : qrisImagePath ? (
+              <>
+                <p className="mt-2 text-sm text-muted-foreground">Gunakan QRIS resmi yang ditampilkan di bawah setelah admin mengonfirmasi nominal pembayaran.</p>
+                <img
+                  src={`/api/public/foto/${qrisImagePath.split("/").map(encodeURIComponent).join("/")}`}
+                  alt="Kode QRIS pembayaran"
+                  className="mx-auto mt-4 max-h-[360px] w-full max-w-xs rounded-xl object-contain"
+                  loading="lazy"
+                />
+                <p className="mt-3 text-xs text-muted-foreground">Pastikan nama merchant dan nominal benar sebelum membayar. Jika gambar tidak tampil, hubungi admin melalui WhatsApp.</p>
+              </>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">QRIS belum diatur atau belum tersedia. Silakan konfirmasi metode dan nominal pembayaran kepada admin melalui WhatsApp.</p>
+            )}
+          </section>
+        )}
         <div className="mt-6 flex flex-wrap gap-3">
           <a href={waLink(msg)} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:opacity-90">
             Kirim via WhatsApp
