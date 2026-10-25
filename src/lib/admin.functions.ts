@@ -176,7 +176,7 @@ export const updateOrderPayment = createServerFn({ method: "POST" })
     if (data.total_amount !== undefined) {
       patch.total_amount = data.total_amount;
       if (data.total_amount !== null) {
-        const { data: settings } = await ctx.supabase.from("payment_settings").select("dp_percent").eq("id", 1).maybeSingle();
+        const { data: settings } = await ctx.supabase.from("payment_settings").select("dp_percent, qris_image_path").eq("id", 1).maybeSingle();
         const percent = data.dp_percent ?? settings?.dp_percent ?? 50;
         patch.dp_percent = percent;
         patch.dp_amount = Math.round(data.total_amount * percent / 100);
@@ -204,11 +204,11 @@ export const getPaymentSettings = createServerFn({ method: "GET" })
 
 export const savePaymentSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ dp_percent: z.number().int().min(0).max(100), qris_image_path: z.string().max(500).nullable().optional() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ dp_percent: z.number().int().min(0).max(100).optional(), qris_image_path: z.string().max(500).nullable().optional() }).refine((v) => v.dp_percent !== undefined || v.qris_image_path !== undefined, "Tidak ada pengaturan yang diubah").parse(data))
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as Ctx;
     await assertAdmin(ctx);
-    const { error } = await ctx.supabase.from("payment_settings").upsert({ id: 1, dp_percent: data.dp_percent, ...(data.qris_image_path !== undefined ? { qris_image_path: data.qris_image_path } : {}), updated_at: new Date().toISOString() });
+    const { error } = await ctx.supabase.from("payment_settings").upsert({ id: 1, dp_percent: data.dp_percent ?? 50, ...(data.qris_image_path !== undefined ? { qris_image_path: data.qris_image_path } : {}), updated_at: new Date().toISOString() });
     if (error) throw new Error("Gagal menyimpan pengaturan DP");
     return { ok: true };
   });
