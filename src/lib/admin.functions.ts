@@ -6,16 +6,24 @@ import type { ServiceRow } from "@/lib/catalog";
 type Ctx = { supabase: any; userId: string };
 
 async function assertAdmin(ctx: Ctx) {
-  const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
-  if (!data) throw new Error("Akses ditolak: bukan admin");
+  const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+  if (error) {
+    console.error("[Admin] Gagal memeriksa peran:", error.message);
+    throw new Error("Gagal memeriksa hak admin. Muat ulang halaman; jika berulang, periksa konfigurasi backend.");
+  }
+  if (data !== true) throw new Error("Akses ditolak: akun ini bukan admin");
 }
 
 export const getMyAdminStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const ctx = context as unknown as Ctx;
-    const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
-    return { isAdmin: Boolean(data) };
+    const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+    if (error) {
+      console.error("[Admin] Gagal memeriksa status admin:", error.message);
+      throw new Error("Gagal memeriksa hak admin. Muat ulang halaman; jika berulang, periksa konfigurasi backend.");
+    }
+    return { isAdmin: data === true };
   });
 
 export const adminListServices = createServerFn({ method: "GET" })
