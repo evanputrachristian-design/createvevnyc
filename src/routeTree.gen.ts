@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as KontakRouteImport } from './routes/kontak'
+import { Route as LacakPesananRouteImport } from './routes/lacak-pesanan'
 import { Route as PesanRouteImport } from './routes/pesan'
 import { Route as PortofolioRouteImport } from './routes/portofolio'
 import { Route as TentangRouteImport } from './routes/tentang'
@@ -40,6 +41,11 @@ const AuthRoute = AuthRouteImport.update({
 const KontakRoute = KontakRouteImport.update({
   id: '/kontak',
   path: '/kontak',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LacakPesananRoute = LacakPesananRouteImport.update({
+  id: '/lacak-pesanan',
+  path: '/lacak-pesanan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PesanRoute = PesanRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/kontak': typeof KontakRoute
+  '/lacak-pesanan': typeof LacakPesananRoute
   '/pesan': typeof PesanRoute
   '/portofolio': typeof PortofolioRoute
   '/tentang': typeof TentangRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/kontak': typeof KontakRoute
+  '/lacak-pesanan': typeof LacakPesananRoute
   '/pesan': typeof PesanRoute
   '/portofolio': typeof PortofolioRoute
   '/tentang': typeof TentangRoute
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/kontak': typeof KontakRoute
+  '/lacak-pesanan': typeof LacakPesananRoute
   '/pesan': typeof PesanRoute
   '/portofolio': typeof PortofolioRoute
   '/tentang': typeof TentangRoute
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/kontak'
+    | '/lacak-pesanan'
     | '/pesan'
     | '/portofolio'
     | '/tentang'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/kontak'
+    | '/lacak-pesanan'
     | '/pesan'
     | '/portofolio'
     | '/tentang'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/kontak'
+    | '/lacak-pesanan'
     | '/pesan'
     | '/portofolio'
     | '/tentang'
@@ -184,6 +196,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   KontakRoute: typeof KontakRoute
+  LacakPesananRoute: typeof LacakPesananRoute
   PesanRoute: typeof PesanRoute
   PortofolioRoute: typeof PortofolioRoute
   TentangRoute: typeof TentangRoute
@@ -220,6 +233,13 @@ declare module '@tanstack/react-router' {
       path: '/kontak'
       fullPath: '/kontak'
       preLoaderRoute: typeof KontakRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lacak-pesanan': {
+      id: '/lacak-pesanan'
+      path: '/lacak-pesanan'
+      fullPath: '/lacak-pesanan'
+      preLoaderRoute: typeof LacakPesananRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pesan': {
@@ -308,6 +328,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   KontakRoute: KontakRoute,
+  LacakPesananRoute: LacakPesananRoute,
   PesanRoute: PesanRoute,
   PortofolioRoute: PortofolioRoute,
   TentangRoute: TentangRoute,
