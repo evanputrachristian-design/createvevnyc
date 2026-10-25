@@ -30,10 +30,13 @@ grant all on public.payment_settings to service_role;
 drop policy if exists "Public can read payment display settings" on public.payment_settings;
 create policy "Public can read payment display settings" on public.payment_settings
   for select to anon, authenticated using (true);
+drop policy if exists "Admins can read payment settings" on public.payment_settings;
 create policy "Admins can read payment settings" on public.payment_settings
   for select to authenticated using (public.has_role(auth.uid(), 'admin'));
+drop policy if exists "Admins can insert payment settings" on public.payment_settings;
 create policy "Admins can insert payment settings" on public.payment_settings
   for insert to authenticated with check (public.has_role(auth.uid(), 'admin'));
+drop policy if exists "Admins can update payment settings" on public.payment_settings;
 create policy "Admins can update payment settings" on public.payment_settings
   for update to authenticated using (public.has_role(auth.uid(), 'admin'))
   with check (public.has_role(auth.uid(), 'admin'));
@@ -50,8 +53,11 @@ on conflict (id) do update set public = true, file_size_limit = 5242880, allowed
 drop policy if exists "Public can view payment assets" on storage.objects;
 create policy "Public can view payment assets" on storage.objects for select to public using (bucket_id = 'payment-assets');
 drop policy if exists "Admins can upload payment assets" on storage.objects;
+drop policy if exists "Admins can upload payment assets" on storage.objects;
 create policy "Admins can upload payment assets" on storage.objects for insert to authenticated with check (bucket_id = 'payment-assets' and public.has_role(auth.uid(), 'admin'));
 drop policy if exists "Admins can update payment assets" on storage.objects;
+drop policy if exists "Admins can update payment assets" on storage.objects;
 create policy "Admins can update payment assets" on storage.objects for update to authenticated using (bucket_id = 'payment-assets' and public.has_role(auth.uid(), 'admin')) with check (bucket_id = 'payment-assets' and public.has_role(auth.uid(), 'admin'));
+drop policy if exists "Admins can delete payment assets" on storage.objects;
 drop policy if exists "Admins can delete payment assets" on storage.objects;
 create policy "Admins can delete payment assets" on storage.objects for delete to authenticated using (bucket_id = 'payment-assets' and public.has_role(auth.uid(), 'admin'));
