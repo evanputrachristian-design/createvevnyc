@@ -4,6 +4,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { ServiceRow } from "@/lib/catalog";
 
 type Ctx = { supabase: any; userId: string };
+function failAdminOperation(operation: string, error: { message?: string } | null | undefined, userMessage: string): never {
+  // Keep provider details in server logs only; never return raw Supabase errors to the browser.
+  console.error(`[Admin] ${operation} failed:`, error?.message ?? "Unknown Supabase error");
+  throw new Error(userMessage);
+}
+
 
 async function assertAdmin(ctx: Ctx) {
   const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
@@ -32,7 +38,7 @@ export const adminListServices = createServerFn({ method: "GET" })
     const ctx = context as unknown as Ctx;
     await assertAdmin(ctx);
     const { data, error } = await ctx.supabase.from("services").select("*").order("sort_order");
-    if (error) throw new Error("Gagal memuat layanan");
+    if (error) failAdminOperation("adminListServices", error, "Gagal memuat layanan. Silakan coba lagi.");
     return (data ?? []) as unknown as ServiceRow[];
   });
 
@@ -79,7 +85,7 @@ export const saveService = createServerFn({ method: "POST" })
           updated_at: new Date().toISOString(),
         })
         .eq("id", data.id);
-      if (error) throw new Error("Gagal menyimpan perubahan");
+      if (error) failAdminOperation("saveService.update", error, "Gagal menyimpan perubahan layanan. Silakan coba lagi.");
       return { id: data.id };
     }
     const base = slugify(data.name);
@@ -106,7 +112,7 @@ export const saveService = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
-    if (error) throw new Error("Gagal menambah layanan");
+    if (error) failAdminOperation("saveService.insert", error, "Gagal menambahkan layanan. Silakan coba lagi.");
     return { id: inserted.id as string };
   });
 
@@ -117,7 +123,7 @@ export const deleteService = createServerFn({ method: "POST" })
     const ctx = context as unknown as Ctx;
     await assertAdmin(ctx);
     const { error } = await ctx.supabase.from("services").delete().eq("id", data.id);
-    if (error) throw new Error("Gagal menghapus layanan");
+    if (error) failAdminOperation("deleteService", error, "Gagal menghapus layanan. Silakan coba lagi.");
     return { ok: true };
   });
 
@@ -148,7 +154,7 @@ export const adminListOrders = createServerFn({ method: "GET" })
     const ctx = context as unknown as Ctx;
     await assertAdmin(ctx);
     const { data, error } = await ctx.supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(200);
-    if (error) throw new Error("Gagal memuat pesanan");
+    if (error) failAdminOperation("adminListOrders", error, "Gagal memuat pesanan. Silakan coba lagi.");
     return (data ?? []) as unknown as OrderRow[];
   });
 
@@ -161,7 +167,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     const ctx = context as unknown as Ctx;
     await assertAdmin(ctx);
     const { error } = await ctx.supabase.from("orders").update({ status: data.status }).eq("id", data.id);
-    if (error) throw new Error("Gagal memperbarui status");
+    if (error) failAdminOperation("updateOrderStatus", error, "Gagal memperbarui status pesanan. Silakan coba lagi.");
     return { ok: true };
   });
 
@@ -196,7 +202,7 @@ export const updateOrderPayment = createServerFn({ method: "POST" })
     }
     if (data.payment_note !== undefined) patch.payment_note = data.payment_note;
     const { error } = await ctx.supabase.from("orders").update(patch).eq("id", data.id);
-    if (error) throw new Error("Gagal memperbarui pembayaran");
+    if (error) failAdminOperation("updateOrderPayment", error, "Gagal memperbarui pembayaran. Silakan coba lagi.");
     return { ok: true };
   });
 
@@ -206,7 +212,7 @@ export const getPaymentSettings = createServerFn({ method: "GET" })
     const ctx = context as unknown as Ctx;
     await assertAdmin(ctx);
     const { data, error } = await ctx.supabase.from("payment_settings").select("dp_percent, qris_image_path").eq("id", 1).maybeSingle();
-    if (error) throw new Error("Gagal memuat pengaturan DP");
+    if (error) failAdminOperation("getPaymentSettings", error, "Gagal memuat pengaturan pembayaran. Silakan coba lagi.");
     return { dp_percent: data?.dp_percent ?? 50, qris_image_path: data?.qris_image_path ?? null };
   });
 
@@ -220,6 +226,6 @@ export const savePaymentSettings = createServerFn({ method: "POST" })
     if (data.dp_percent !== undefined) patch.dp_percent = data.dp_percent;
     if (data.qris_image_path !== undefined) patch.qris_image_path = data.qris_image_path;
     const { error } = await ctx.supabase.from("payment_settings").update(patch).eq("id", 1);
-    if (error) throw new Error("Gagal menyimpan pengaturan DP");
+    if (error) failAdminOperation("savePaymentSettings", error, "Gagal menyimpan pengaturan pembayaran. Silakan coba lagi.");
     return { ok: true };
   });
