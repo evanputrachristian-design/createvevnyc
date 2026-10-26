@@ -43,6 +43,7 @@ const serviceInput = z.object({
   short: z.string().trim().max(300).default(""),
   description: z.string().trim().max(3000).default(""),
   price: z.number().int().min(0),
+  discount_price: z.number().int().min(0).nullable().optional(),
   duration: z.string().trim().max(100).default(""),
   available: z.boolean(),
   featured: z.boolean(),
@@ -63,6 +64,8 @@ export const saveService = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as Ctx;
     await assertAdmin(ctx);
+    const discount = data.discount_price ?? null;
+    if (discount !== null && discount >= data.price) throw new Error("Harga diskon harus lebih kecil dari harga normal");
     if (data.id) {
       const { error } = await ctx.supabase
         .from("services")
@@ -72,6 +75,7 @@ export const saveService = createServerFn({ method: "POST" })
           short: data.short,
           description: data.description,
           price: data.price,
+          discount_price: discount,
           duration: data.duration,
           available: data.available,
           featured: data.featured,
@@ -98,6 +102,7 @@ export const saveService = createServerFn({ method: "POST" })
         short: data.short,
         description: data.description,
         price: data.price,
+        discount_price: discount,
         duration: data.duration,
         available: data.available,
         featured: data.featured,
@@ -134,6 +139,8 @@ export type OrderRow = {
   deadline: string | null;
   notes: string | null;
   status: string;
+  payment_flow_status?: "menunggu_pembayaran" | "menunggu_konfirmasi" | "dikonfirmasi" | "ditolak";
+  access_code?: string | null;
   payment_method?: "transfer" | "tunai";
   payment_status?: "belum_dibayar" | "menunggu_verifikasi" | "dp_dibayar" | "lunas" | "gagal" | "dibatalkan";
   total_amount?: number | null;
@@ -182,19 +189,19 @@ export const updateOrderPayment = createServerFn({ method: "POST" })
     await assertAdmin(ctx);
     const patch: Record<string, unknown> = { payment_status: data.payment_status };
     if (data.total_amount !== undefined) {
-      patch.total_amount = data.total_amount;
+      patch["total_amount"] = data.total_amount;
       if (data.total_amount !== null) {
         const { data: settings } = await ctx.supabase.from("payment_settings").select("dp_percent, qris_image_path").eq("id", 1).maybeSingle();
         const percent = data.dp_percent ?? settings?.dp_percent ?? 50;
-        patch.dp_percent = percent;
-        patch.dp_amount = Math.round(data.total_amount * percent / 100);
+        patch["dp_percent"] = percent;
+        patch["dp_amount"] = Math.round(data.total_amount * percent / 100);
       }
     }
     if (data.dp_percent !== undefined) {
-      patch.dp_percent = data.dp_percent;
-      if (data.total_amount !== undefined && data.total_amount !== null) patch.dp_amount = Math.round(data.total_amount * data.dp_percent / 100);
+      patch["dp_percent"] = data.dp_percent;
+      if (data.total_amount !== undefined && data.total_amount !== null) patch["dp_amount"] = Math.round(data.total_amount * data.dp_percent / 100);
     }
-    if (data.payment_note !== undefined) patch.payment_note = data.payment_note;
+    if (data.payment_note !== undefined) patch["payment_note"] = data.payment_note;
     const { error } = await ctx.supabase.from("orders").update(patch).eq("id", data.id);
     if (error) throw new Error("Gagal memperbarui pembayaran");
     return { ok: true };
@@ -216,10 +223,10 @@ export const savePaymentSettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as Ctx;
     await assertAdmin(ctx);
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if (data.dp_percent !== undefined) patch.dp_percent = data.dp_percent;
-    if (data.qris_image_path !== undefined) patch.qris_image_path = data.qris_image_path;
-    const { error } = await ctx.supabase.from("payment_settings").update(patch).eq("id", 1);
-    if (error) throw new Error("Gagal menyimpan pengaturan DP");
+    const patch: Record<string, unknown> = { id: 1, updated_at: new Date().toISOString() };
+    if (data.dp_percent !== undefined) patch["dp_percent"] = data.dp_percent;
+    if (data.qris_image_path !== undefined) patch["qris_image_path"] = data.qris_image_path;
+    const { error } = await ctx.supabase.from("payment_settings").upsert(patch, { onConflict: "id" });
+    if (error) throw new Error("Gagal menyimpan pengaturan pembayaran");
     return { ok: true };
   });

@@ -128,7 +128,7 @@ function LayananDetail() {
               <Link key={r.slug} to="/layanan/$slug" params={{ slug: r.slug }} className="rounded-2xl border bg-card p-5 transition-transform hover:-translate-y-1">
                 <p className="font-semibold">{r.name}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{r.short}</p>
-                <p className="mt-2 text-sm font-bold text-primary">mulai {rupiah(Math.min(...r.packages.map((p) => p.price)))}</p>
+                <p className="mt-2 text-sm font-bold text-primary">mulai {rupiah(r.discountPrice ?? Math.min(...r.packages.map((p) => p.price)))}</p>
               </Link>
             ))}
           </div>
