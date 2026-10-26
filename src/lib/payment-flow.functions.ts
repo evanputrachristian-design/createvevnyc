@@ -108,13 +108,13 @@ export const adminTransitionPaymentFlow = createServerFn({ method: "POST" })
       const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
       const bytes = new Uint8Array(10); crypto.getRandomValues(bytes);
       const accessCode = Array.from(bytes, (v) => alphabet[v % alphabet.length]).join("");
-      patch.access_code = accessCode;
-      patch.confirmed_at = new Date().toISOString();
-      patch.confirmed_by = ctx.userId;
+      patch["access_code"] = accessCode;
+      patch["confirmed_at"] = new Date().toISOString();
+      patch["confirmed_by"] = ctx.userId;
     } else if (data.action === "ditolak") {
-      patch.rejected_at = new Date().toISOString();
-      patch.rejected_by = ctx.userId;
-      patch.rejection_reason = clean(data.rejectionReason);
+      patch["rejected_at"] = new Date().toISOString();
+      patch["rejected_by"] = ctx.userId;
+      patch["rejection_reason"] = clean(data.rejectionReason);
     }
     const expected = data.action === "menunggu_konfirmasi" ? "menunggu_pembayaran" : "menunggu_konfirmasi";
     const { data: updated, error } = await sb.from("orders").update(patch)
