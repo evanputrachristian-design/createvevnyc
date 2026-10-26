@@ -139,7 +139,14 @@ export function ServiceCard({ s }: { s: Service }) {
         <div className="mt-4 flex items-end justify-between">
           <div>
             <p className="text-xs text-muted-foreground">Mulai dari</p>
-            <p className="font-semibold">{rupiah(startingPrice(s))}</p>
+            {s.discountPrice != null && s.discountPrice < startingPrice(s) ? (
+              <p className="font-semibold">
+                <span className="mr-2 text-xs font-normal text-muted-foreground line-through">{rupiah(startingPrice(s))}</span>
+                <span className="text-primary">{rupiah(s.discountPrice)}</span>
+              </p>
+            ) : (
+              <p className="font-semibold">{rupiah(startingPrice(s))}</p>
+            )}
           </div>
           <span className="text-sm font-semibold text-primary">Lihat detail →</span>
         </div>

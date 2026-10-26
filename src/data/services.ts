@@ -32,6 +32,8 @@ export type Service = {
   requirements: string[];
   available: boolean;
   featured?: boolean;
+  /** Harga promo mulai (Rp); bila ada, menggantikan harga mulai normal di katalog. */
+  discountPrice?: number | null;
 };
 
 export const services: Service[] = [ 

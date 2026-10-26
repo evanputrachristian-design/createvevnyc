@@ -13,6 +13,7 @@ export type ServiceRow = {
   short: string;
   description: string;
   price: number;
+  discount_price: number | null;
   duration: string;
   image_key: string | null;
   photo_path: string | null;
@@ -45,7 +46,7 @@ export function toService(row: ServiceRow): Service {
   const packages =
     ex.packages && ex.packages.length > 0
       ? ex.packages
-      : [{ name: "Paket Standar", price: row.price, features: [] }];
+      : [{ name: "Paket Standar", price: row.discount_price ?? row.price, features: [] }];
   const galleryKeys = ex.gallery ?? [];
   const main = imageFor(row.image_key, row.photo_path);
   const gallery = row.photo_path
@@ -69,5 +70,6 @@ export function toService(row: ServiceRow): Service {
     requirements: ex.requirements ?? [],
     available: row.available,
     featured: row.featured,
+    discountPrice: row.discount_price,
   };
 }
