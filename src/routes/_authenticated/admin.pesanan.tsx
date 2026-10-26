@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { Upload, Image as ImageIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { adminListOrders, getMyAdminStatus, updateOrderStatus, updateOrderPayment, getPaymentSettings, savePaymentSettings, type OrderRow } from "@/lib/admin.functions";
 import { waLink, site } from "@/config/site";
@@ -28,17 +30,47 @@ function AdminPesanan() {
   const orders = useQuery({ queryKey: ["admin-orders"], queryFn: () => adminListOrders(), enabled: Boolean(isAdmin) });
   const paymentSettings = useQuery({ queryKey: ["payment-settings"], queryFn: () => getPaymentSettings(), enabled: Boolean(isAdmin) });
   const [dpPercent, setDpPercent] = useState<number | null>(null);
+  const [qrisFile, setQrisFile] = useState<File | null>(null);
+  const [qrisPreview, setQrisPreview] = useState<string | null>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const qrisInputRef = useRef<HTMLInputElement>(null);
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const currentDp = dpPercent ?? paymentSettings.data?.dp_percent ?? 50;
 
-  const saveDp = async () => {
+  const handleQrisFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (qrisPreview) URL.revokeObjectURL(qrisPreview);
+    setQrisFile(file);
+    setQrisPreview(file ? URL.createObjectURL(file) : null);
+  };
+
+  const saveAllPaymentSettings = async () => {
+    setSavingSettings(true);
     try {
-      await savePaymentSettings({ data: { dp_percent: currentDp } });
-      setDpPercent(currentDp);
+      let qris_image_path = paymentSettings.data?.qris_image_path ?? null;
+      if (qrisFile) {
+        if (!qrisFile.type.startsWith("image/")) throw new Error("Pilih berkas gambar untuk QRIS.");
+        const ext = (qrisFile.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+        const path = `qris-${crypto.randomUUID()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("payment-assets")
+          .upload(path, qrisFile, { contentType: qrisFile.type, upsert: true });
+        if (uploadError) throw new Error("Gagal mengunggah foto QRIS: " + uploadError.message);
+        qris_image_path = path;
+      }
+      await savePaymentSettings({ data: { dp_percent: currentDp, qris_image_path } });
+      toast.success("Pengaturan pembayaran dan QRIS berhasil disimpan");
+      setQrisFile(null);
+      if (qrisPreview) URL.revokeObjectURL(qrisPreview);
+      setQrisPreview(null);
+      if (qrisInputRef.current) qrisInputRef.current.value = "";
       qc.invalidateQueries({ queryKey: ["payment-settings"] });
-      toast.success("Persentase DP disimpan");
-    } catch (err) { toast.error(err instanceof Error ? err.message : "Gagal menyimpan pengaturan DP"); }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan pengaturan");
+    } finally {
+      setSavingSettings(false);
+    }
   };
 
   const setPayment = async (o: OrderRow, payment_status: "belum_dibayar" | "menunggu_verifikasi" | "dp_dibayar" | "lunas" | "gagal" | "dibatalkan") => {
@@ -62,6 +94,37 @@ function AdminPesanan() {
 
   return (
     <AdminShell title="Pesanan Masuk">
+      <section className="mb-6 rounded-2xl border bg-card p-5 shadow-xs">
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl bg-secondary p-2 text-primary"><ImageIcon className="h-5 w-5" /></div>
+          <div>
+            <h2 className="text-base font-semibold">Pengaturan Pembayaran &amp; QRIS Toko</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Atur persentase down payment (DP) dan unggah gambar QRIS resmi toko Anda. Gambar ini disajikan aman ke pelanggan melalui rute /api/public/foto/.</p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-5 sm:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-foreground">Persentase DP: <span className="font-bold text-primary">{currentDp}%</span></label>
+            <input type="range" min={0} max={100} step={5} value={currentDp} onChange={(e) => setDpPercent(Number(e.target.value))} className="w-full accent-[var(--primary)]" />
+            <div className="flex justify-between gap-2 text-[11px] text-muted-foreground"><span>0% (Lunas di akhir)</span><span>50% (Standar)</span><span>100% (Bayar penuh di awal)</span></div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-foreground">Foto / Gambar QRIS</label>
+            <input ref={qrisInputRef} type="file" accept="image/*" onChange={handleQrisFileChange} className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-secondary-foreground hover:file:bg-secondary/80" />
+            {(qrisPreview || paymentSettings.data?.qris_image_path) ? (
+              <div className="mt-2 flex items-center gap-3">
+                <img src={qrisPreview ?? `/api/public/foto/${paymentSettings.data?.qris_image_path}`} alt="Pratinjau QRIS" className="h-24 w-24 rounded-lg border bg-white p-1 object-contain" />
+                <span className="text-xs text-muted-foreground">{qrisPreview ? "Gambar baru siap disimpan" : "Gambar QRIS aktif saat ini"}</span>
+              </div>
+            ) : <p className="text-xs text-muted-foreground">Belum ada foto QRIS yang diunggah.</p>}
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button onClick={saveAllPaymentSettings} disabled={savingSettings || paymentSettings.isLoading} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50">
+            <Upload className="h-3.5 w-3.5" />{savingSettings ? "Menyimpan..." : "Simpan Pengaturan Pembayaran & QRIS"}
+          </button>
+        </div>
+      </section>
       <div className="grid gap-4">
         {((orders.data ?? []) as OrderRow[]).map((o) => (
           <article key={o.id} className="rounded-2xl border bg-card p-5">
