@@ -13,8 +13,7 @@ function failAdminOperation(operation: string, error: { message?: string } | nul
 async function assertAdmin(ctx: Ctx) {
   const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
   if (error) {
-    console.error("[Admin] Gagal memeriksa peran:", error.message);
-    throw new Error("Gagal memeriksa hak admin. Muat ulang halaman; jika berulang, periksa konfigurasi backend.");
+    failAdminOperation("assertAdmin.roleCheck", error, "Gagal memeriksa hak admin. Muat ulang halaman; jika berulang, periksa konfigurasi backend.");
   }
   if (data !== true) throw new Error("Akses ditolak: akun ini bukan admin");
 }
@@ -25,8 +24,7 @@ export const getMyAdminStatus = createServerFn({ method: "GET" })
     const ctx = context as unknown as Ctx;
     const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
     if (error) {
-      console.error("[Admin] Gagal memeriksa status admin:", error.message);
-      throw new Error("Gagal memeriksa hak admin. Muat ulang halaman; jika berulang, periksa konfigurasi backend.");
+      failAdminOperation("getMyAdminStatus.roleCheck", error, "Gagal memeriksa hak admin. Muat ulang halaman; jika berulang, periksa konfigurasi backend.");
     }
     return { isAdmin: data === true };
   });
