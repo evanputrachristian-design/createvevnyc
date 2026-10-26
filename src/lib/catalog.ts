@@ -13,6 +13,7 @@ export type ServiceRow = {
   short: string;
   description: string;
   price: number;
+  discount_price?: number | null;
   duration: string;
   image_key: string | null;
   photo_path: string | null;
