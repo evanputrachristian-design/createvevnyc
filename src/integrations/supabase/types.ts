@@ -14,48 +14,155 @@ export type Database = {
   }
   public: {
     Tables: {
+      order_access_attempts: {
+        Row: {
+          attempt_scope: string
+          failed_attempts: number
+          id: number
+          locked_until: string | null
+          order_id: string | null
+          subject_hash: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          attempt_scope: string
+          failed_attempts?: number
+          id?: never
+          locked_until?: string | null
+          order_id?: string | null
+          subject_hash: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Update: {
+          attempt_scope?: string
+          failed_attempts?: number
+          id?: never
+          locked_until?: string | null
+          order_id?: string | null
+          subject_hash?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_access_attempts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
+          access_code: string | null
+          confirmed_at: string | null
+          confirmed_by: string | null
           contact: string
           created_at: string
           deadline: string | null
           description: string
+          dp_amount: number | null
+          dp_percent: number
           id: string
+          is_legacy_order: boolean
           name: string
           notes: string | null
+          payment_flow_status: string
+          payment_method: string
+          payment_note: string | null
+          payment_status: string
           pkg: string
           quantity: string | null
           reference: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           service_name: string
           status: string
+          total_amount: number | null
+          waiting_token_hash: string | null
         }
         Insert: {
+          access_code?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           contact: string
           created_at?: string
           deadline?: string | null
           description: string
+          dp_amount?: number | null
+          dp_percent?: number
           id?: string
+          is_legacy_order?: boolean
           name: string
           notes?: string | null
+          payment_flow_status?: string
+          payment_method?: string
+          payment_note?: string | null
+          payment_status?: string
           pkg: string
           quantity?: string | null
           reference?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           service_name: string
           status?: string
+          total_amount?: number | null
+          waiting_token_hash?: string | null
         }
         Update: {
+          access_code?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           contact?: string
           created_at?: string
           deadline?: string | null
           description?: string
+          dp_amount?: number | null
+          dp_percent?: number
           id?: string
+          is_legacy_order?: boolean
           name?: string
           notes?: string | null
+          payment_flow_status?: string
+          payment_method?: string
+          payment_note?: string | null
+          payment_status?: string
           pkg?: string
           quantity?: string | null
           reference?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           service_name?: string
           status?: string
+          total_amount?: number | null
+          waiting_token_hash?: string | null
+        }
+        Relationships: []
+      }
+      payment_settings: {
+        Row: {
+          dp_percent: number
+          id: number
+          qris_image_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          dp_percent?: number
+          id?: number
+          qris_image_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          dp_percent?: number
+          id?: number
+          qris_image_path?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -65,6 +172,7 @@ export type Database = {
           category: string
           created_at: string
           description: string
+          discount_price: number | null
           duration: string
           extras: Json
           featured: boolean
@@ -83,6 +191,7 @@ export type Database = {
           category: string
           created_at?: string
           description?: string
+          discount_price?: number | null
           duration?: string
           extras?: Json
           featured?: boolean
@@ -101,6 +210,7 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string
+          discount_price?: number | null
           duration?: string
           extras?: Json
           featured?: boolean
@@ -143,6 +253,29 @@ export type Database = {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
+        }
+        Returns: boolean
+      }
+      is_order_access_locked: {
+        Args: { p_scope: string; p_subject_hash: string }
+        Returns: boolean
+      }
+      record_order_access_failure: {
+        Args: { p_order_id?: string; p_scope: string; p_subject_hash: string }
+        Returns: string
+      }
+      reset_order_access_attempts: {
+        Args: { p_order_subject_hash: string }
+        Returns: undefined
+      }
+      transition_order_payment_status: {
+        Args: {
+          p_access_code?: string
+          p_actor?: string
+          p_expected_status: string
+          p_new_status: string
+          p_order_id: string
+          p_rejection_reason?: string
         }
         Returns: boolean
       }
