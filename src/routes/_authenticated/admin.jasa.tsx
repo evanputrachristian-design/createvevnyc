@@ -27,6 +27,7 @@ type FormState = {
   short: string;
   description: string;
   price: string;
+  discount_price: string;
   duration: string;
   available: boolean;
   featured: boolean;
@@ -35,7 +36,7 @@ type FormState = {
 };
 
 const emptyForm: FormState = {
-  name: "", category: "", short: "", description: "", price: "", duration: "",
+  name: "", category: "", short: "", description: "", price: "", discount_price: "", duration: "",
   available: true, featured: false, photo_path: null, image_key: null,
 };
 
@@ -61,7 +62,7 @@ function AdminJasa() {
   const openEdit = (s: ServiceRow) => {
     setForm({
       id: s.id, name: s.name, category: s.category, short: s.short, description: s.description,
-      price: String(s.price), duration: s.duration, available: s.available, featured: s.featured,
+      price: String(s.price), discount_price: s.discount_price != null ? String(s.discount_price) : "", duration: s.duration, available: s.available, featured: s.featured,
       photo_path: s.photo_path, image_key: s.image_key,
     });
     setFile(null);
@@ -82,6 +83,17 @@ function AdminJasa() {
       toast.error("Harga tidak valid");
       return;
     }
+    const discount_price = form.discount_price.trim() !== "" ? Number(form.discount_price) : null;
+    if (discount_price !== null) {
+      if (!Number.isFinite(discount_price) || discount_price < 0) {
+        toast.error("Harga diskon tidak valid");
+        return;
+      }
+      if (discount_price >= price) {
+        toast.error("Harga diskon harus lebih kecil dari harga normal");
+        return;
+      }
+    }
     setSaving(true);
     try {
       let photo_path = form.photo_path;
@@ -100,6 +112,7 @@ function AdminJasa() {
           short: form.short,
           description: form.description,
           price,
+          discount_price,
           duration: form.duration,
           available: form.available,
           featured: form.featured,
@@ -139,6 +152,7 @@ function AdminJasa() {
               <th className="p-4 font-medium">Jasa</th>
               <th className="p-4 font-medium">Kategori</th>
               <th className="p-4 font-medium">Harga mulai</th>
+              <th className="p-4 font-medium">Harga promo</th>
               <th className="p-4 font-medium">Status</th>
               <th className="p-4 font-medium"><span className="sr-only">Aksi</span></th>
             </tr>
@@ -154,6 +168,7 @@ function AdminJasa() {
                 </td>
                 <td className="p-4">{s.category}</td>
                 <td className="p-4">{rupiah(s.price)}</td>
+                <td className="p-4">{s.discount_price != null ? <><span className="font-semibold text-primary">{rupiah(s.discount_price)}</span><span className="ml-2 text-xs text-muted-foreground line-through">{rupiah(s.price)}</span></> : <span className="text-muted-foreground">—</span>}</td>
                 <td className="p-4">
                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${s.available ? "bg-secondary text-primary" : "bg-muted text-muted-foreground"}`}>
                     {s.available ? "Tersedia" : "Nonaktif"}
@@ -192,6 +207,10 @@ function AdminJasa() {
                 <Label htmlFor="j-price">Harga mulai (Rp) *</Label>
                 <Input id="j-price" required type="number" min={0} step={1000} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="j-discount">Harga promo / diskon (Rp) (opsional)</Label>
+              <Input id="j-discount" type="number" min={0} step={1000} placeholder="Kosongkan jika tidak ada promo" value={form.discount_price} onChange={(e) => setForm({ ...form, discount_price: e.target.value })} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="j-short">Deskripsi singkat</Label>
